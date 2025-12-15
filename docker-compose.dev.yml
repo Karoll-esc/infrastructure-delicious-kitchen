@@ -1,0 +1,35 @@
+services:
+  # Solo infraestructura para desarrollo local
+  mongodb:
+    image: mongo:latest
+    container_name: restaurant-mongodb-dev
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: orders
+    volumes:
+      - mongodb_dev_data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: restaurant-rabbitmq-dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: restaurant-mongo-express-dev
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017
+      ME_CONFIG_BASICAUTH: false
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_dev_data:

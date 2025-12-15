@@ -1,0 +1,148 @@
+services:
+  # ==========================================
+  # INFRASTRUCTURE SERVICES
+  # ==========================================
+  
+  mongodb:
+    image: mongo:latest
+    container_name: restaurant-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: orders
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - delicious-kitchen-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: restaurant-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - delicious-kitchen-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: restaurant-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017
+      ME_CONFIG_BASICAUTH: false
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - delicious-kitchen-network
+
+  # ==========================================
+  # MICROSERVICES
+  # ==========================================
+
+  api-gateway:
+    build: ../api-gateway-delicious-kitchen
+    container_name: delicious-api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      ORDER_SERVICE_URL: http://order-service:3001
+      KITCHEN_SERVICE_URL: http://kitchen-service:3002
+    depends_on:
+      - order-service
+      - kitchen-service
+    networks:
+      - delicious-kitchen-network
+    restart: unless-stopped
+
+  order-service:
+    build: ../order-service-delicious-kitchen
+    container_name: delicious-order-service
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      MONGODB_URL: mongodb://mongodb:27017/orders
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - delicious-kitchen-network
+    restart: unless-stopped
+
+  kitchen-service:
+    build: ../kitchen-service-delicious-kitchen 
+    container_name: delicious-kitchen-service
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      MONGODB_URL: mongodb://mongodb:27017/kitchen
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - delicious-kitchen-network
+    restart: unless-stopped
+
+  notification-service:
+    build: ../notification-service-delicious-kitchen
+    container_name: delicious-notification-service
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - delicious-kitchen-network
+    restart: unless-stopped
+
+  frontend:
+    build: ../frontend-delicious-kitchen
+    container_name: delicious-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+    depends_on:
+      - api-gateway
+    networks:
+      - delicious-kitchen-network
+    restart: unless-stopped
+
+networks:
+  delicious-kitchen-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
