@@ -1,0 +1,22 @@
+# Environment variables with sensitive data
+.env
+
+# Docker volumes and data
+volumes/
+data/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
