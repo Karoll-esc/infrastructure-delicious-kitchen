@@ -59,13 +59,20 @@ services:
   api-gateway:
     build: ../api-gateway-delicious-kitchen
     container_name: delicious-api-gateway
+    env_file:
+      - .env
     ports:
-      - "3000:3000"
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
     environment:
-      NODE_ENV: development
-      PORT: 3000
-      ORDER_SERVICE_URL: http://order-service:3001
-      KITCHEN_SERVICE_URL: http://kitchen-service:3002
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${API_GATEWAY_PORT}
+      ORDER_SERVICE_URL: ${ORDER_SERVICE_URL}
+      KITCHEN_SERVICE_URL: ${KITCHEN_SERVICE_URL}
+      CORS_ENABLED: ${CORS_ENABLED}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
     depends_on:
       - order-service
       - kitchen-service
@@ -76,13 +83,15 @@ services:
   order-service:
     build: ../order-service-delicious-kitchen
     container_name: delicious-order-service
+    env_file:
+      - .env
     ports:
-      - "3001:3001"
+      - "${ORDER_SERVICE_PORT}:${ORDER_SERVICE_PORT}"
     environment:
-      NODE_ENV: development
-      PORT: 3001
-      MONGODB_URL: mongodb://mongodb:27017/orders
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${ORDER_SERVICE_PORT}
+      MONGODB_URL: ${ORDER_MONGODB_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -95,13 +104,15 @@ services:
   kitchen-service:
     build: ../kitchen-service-delicious-kitchen 
     container_name: delicious-kitchen-service
+    env_file:
+      - .env
     ports:
-      - "3002:3002"
+      - "${KITCHEN_SERVICE_PORT}:${KITCHEN_SERVICE_PORT}"
     environment:
-      NODE_ENV: development
-      PORT: 3002
-      MONGODB_URL: mongodb://mongodb:27017/kitchen
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${KITCHEN_SERVICE_PORT}
+      MONGODB_URL: ${KITCHEN_MONGODB_URL}
+      RABBITMQ_URL: ${RABBITMQ_URL}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -114,12 +125,14 @@ services:
   notification-service:
     build: ../notification-service-delicious-kitchen
     container_name: delicious-notification-service
+    env_file:
+      - .env
     ports:
-      - "3003:3003"
+      - "${NOTIFICATION_SERVICE_PORT}:${NOTIFICATION_SERVICE_PORT}"
     environment:
-      NODE_ENV: development
-      PORT: 3003
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${NOTIFICATION_SERVICE_PORT}
+      RABBITMQ_URL: ${RABBITMQ_URL}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -130,14 +143,22 @@ services:
   frontend:
     build: ../frontend-delicious-kitchen
     container_name: delicious-frontend
+    env_file:
+      - .env
     ports:
       - "5173:5173"
     environment:
-      VITE_API_URL: http://localhost:3000
+      VITE_API_URL: http://localhost:${API_GATEWAY_PORT}
     depends_on:
       - api-gateway
     networks:
       - delicious-kitchen-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
 networks:
