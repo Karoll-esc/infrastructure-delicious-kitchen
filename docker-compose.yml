@@ -29,6 +29,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - delicious-kitchen-network
     healthcheck:
@@ -175,3 +177,4 @@ networks:
 
 volumes:
   mongodb_data:
+  rabbitmq_data:

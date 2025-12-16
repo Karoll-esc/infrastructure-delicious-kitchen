@@ -19,6 +19,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_dev_data:/var/lib/rabbitmq
 
   mongo-express:
     image: mongo-express:latest
@@ -33,3 +35,4 @@ services:
 
 volumes:
   mongodb_dev_data:
+  rabbitmq_dev_data:
