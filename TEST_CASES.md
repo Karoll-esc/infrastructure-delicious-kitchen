@@ -530,25 +530,31 @@
 
 ---
 
-## HU-023: Mejorar Responsividad de Gráficos en Analytics
+## HU-023: Optimizar Experiencia de Usuario en Dashboard de Analytics
 
 ### Casos Positivos
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-023-P01 | Gráficos ajustados en desktop | 1. Abrir analytics en 1920x1080px<br>2. Verificar todos los gráficos | Resolución: 1920x1080 | - Todos los gráficos renderizados correctamente<br>- Textos de barras legibles<br>- Sin superposición de etiquetas<br>- Ejes con suficiente espacio |
-| TC-023-P02 | Gráficos ajustados en tablet | 1. Abrir analytics en tablet 768x1024px<br>2. Verificar gráficos | Resolución: 768x1024 | - Gráficos redimensionados proporcionalmente<br>- Fuente ajustada automáticamente<br>- Etiquetas rotadas si necesario<br>- Sin scroll horizontal |
+| TC-023-P01 | Filtros se aplican automáticamente sin botón | 1. Acceder a dashboard analytics<br>2. Cambiar "Desde" de "1 dic" a "15 nov"<br>3. Observar actualización | Fecha desde: 15 nov<br>Fecha hasta: 17 dic | - Dashboard actualiza automáticamente<br>- Sin botón "Ver métricas"<br>- Datos actualizados en <2 segundos<br>- useEffect detecta cambio en filtros |
+| TC-023-P02 | Rango de fechas permite 10 años históricos | 1. Hacer clic en input "Desde"<br>2. Intentar seleccionar enero 2015<br>3. Verificar habilitación | Fecha: 01/01/2015 | - Fecha 2015 seleccionable<br>- Input tiene min={hoy - 10 años}<br>- Sistema permite consulta histórica |
+| TC-023-P03 | Gráficos muestran rango real de fechas | 1. Seleccionar rango "15 nov - 20 dic"<br>2. Verificar subtítulos de LineChart y BarChart | from: 15 nov<br>to: 20 dic | - Subtítulo muestra: "15 nov - 20 dic"<br>- NO muestra "Últimos 30 días"<br>- Función getDateRangeLabel() retorna rango exacto |
+| TC-023-P04 | Tabla muestra solo períodos sin productos | 1. Agrupar por "semana"<br>2. Verificar estructura de tabla | groupBy: week<br>3 semanas con datos | - Columnas: Período, Órdenes Completadas, Órdenes Canceladas, Ingresos Totales, Ingresos Perdidos<br>- 3 filas (una por semana)<br>- Sin columnas productId, productName, quantity<br>- Sin repeticiones |
+| TC-023-P05 | CSV exporta estructura de tabla actual | 1. Visualizar tabla con 5 períodos<br>2. Clic "Exportar CSV"<br>3. Abrir archivo | 5 períodos visibles | - CSV tiene 5 filas + encabezado<br>- Columnas: period;totalOrders;totalCancelled;totalRevenue;lostRevenue<br>- Sin columnas de productos<br>- Valores coinciden con tabla |
 
 ### Casos Negativos
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-023-N01 | Detectar superposición de texto | 1. Gráfico con 30 barras<br>2. Sin configuración responsive<br>3. Ver en 1366x768 | Datos: 30 categorías<br>Sin autoSkip | - Etiquetas superpuestas (problema detectado)<br>- Texto ilegible<br>- Requerirá corrección |
+| TC-023-N01 | Bloquear fechas futuras | 1. Clic en input "Desde"<br>2. Intentar seleccionar fecha futura | Fecha: 25/12/2025 (futura) | - Fecha futura deshabilitada<br>- Input tiene max={hoy}<br>- Calendario no permite selección futura |
+| TC-023-N02 | Rechazar rango mayor a 10 años | 1. Seleccionar "Desde" 01/01/2010<br>2. Seleccionar "Hasta" 17/12/2025<br>3. Intentar consultar | Rango: 15 años | - Backend rechaza query<br>- HTTP 400<br>- Error: "El rango de fechas excede el máximo permitido (10 años)" |
 
 ### Casos Borde
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-023-B01 | Configuración Chart.js responsive | 1. Verificar opciones de Chart.js<br>2. Revisar código | Configuración: { responsive: ?, maintainAspectRatio: ?, autoSkip: ? } | - responsive: true<br>- maintainAspectRatio: false (donde apropiado)<br>- autoSkip: true en ejes<br>- maxRotation configurado en labels |
-| TC-023-B02 | Prueba en múltiples resoluciones | 1. Abrir analytics en cada resolución<br>2. Verificar legibilidad | Resoluciones:<br>- 1920x1080<br>- 1366x768<br>- 768x1024<br>- 375x667 | - Todos gráficos legibles en todas resoluciones<br>- Sin texto superpuesto<br>- Buen contraste<br>- Interactivos (hover, click) |
-| TC-023-B03 | Texto truncado con tooltip | 1. Gráfico con etiquetas largas<br>2. Verificar rendering | Etiqueta: "Hamburguesa Especial con Queso Extra" | - Texto truncado: "Hamburguesa Espe..."<br>- Tooltip completo al hacer hover<br>- Legible y sin superposición |
+| TC-023-B01 | Subtítulo respeta idioma seleccionado | 1. Sistema en español<br>2. Seleccionar rango "1 dic - 15 dic"<br>3. Verificar subtítulo<br>4. Cambiar a inglés<br>5. Verificar actualización | Rango: 1 dic - 15 dic<br>Idiomas: es, en | - Español: "1 dic - 15 dic"<br>- Inglés: "Dec 1 - Dec 15"<br>- Función usa i18n.language para locale |
+| TC-023-B02 | Mismo día muestra formato corto | 1. Seleccionar "Desde" y "Hasta" con misma fecha<br>2. Verificar subtítulo | from: 17/12/2025<br>to: 17/12/2025 | - Subtítulo muestra: "17 dic"<br>- No muestra "17 dic - 17 dic"<br>- Lógica: if (from === to) |
+| TC-023-B03 | Gráfico de líneas con valores bajos visible | 1. Crear órdenes: 2, 3, 2, 5 por período<br>2. Visualizar LineChart<br>3. Verificar línea verde | Valores: [2, 3, 2, 5] | - Línea verde visible y separada del eje X<br>- No pegada al borde inferior<br>- Margen 10% aplicado en normalización<br>- Padding 20px en cálculo de puntos SVG |
+| TC-023-B04 | Métricas canceladas destacadas visualmente | 1. Período con 3 cancelaciones y $72.000 perdidos<br>2. Verificar tabla | totalCancelled: 3<br>lostRevenue: 72000 | - Valor "3" en color ámbar (text-amber-600)<br>- Valor "$72.000" en color rojo (text-red-600)<br>- Font-weight: medium aplicado<br>- Períodos con 0 en color normal |
+| TC-023-B05 | Tabla sin productos individuales | 1. Verificar getTableData()<br>2. Confirmar estructura retornada | N/A | - Retorna array de períodos<br>- NO hace producto cartesiano con productsSold<br>- Cada período aparece 1 sola vez<br>- Productos solo en BarChart |

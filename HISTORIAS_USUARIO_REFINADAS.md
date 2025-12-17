@@ -956,57 +956,81 @@ Scenario: Validación automática de consistencia de reportes
 
 ---
 
-# [HU-023] — Mejorar Responsividad de Gráficos en Analytics
+# [HU-023] — Optimizar Experiencia de Usuario en Dashboard de Analytics
 
 ## Descripción
 
-* **Como:** Administrador que revisa reportes desde diferentes dispositivos
-* **Quiero:** Que los gráficos de analytics se ajusten correctamente en diferentes tamaños de pantalla sin superposición de texto
-* **Para:** Poder analizar métricas de forma legible desde desktop, tablet o incluso móvil sin perder información visual
+* **Como:** Administrador que analiza métricas de negocio diariamente
+* **Quiero:** Que el dashboard de analytics tenga una interfaz intuitiva, reactiva y con información clara sobre los datos mostrados
+* **Para:** Analizar métricas de forma eficiente sin confusiones, con actualizaciones automáticas y visualizaciones que reflejen exactamente el período consultado
 
 ## Criterios de Aceptación (Gherkin)
 
 ```gherkin
-Scenario: Gráficos se ajustan en pantallas grandes (desktop)
-    Given estoy visualizando analytics en una pantalla de 1920x1080px
-    When cargo el dashboard
-    Then todos los gráficos deben renderizarse correctamente
-    And los textos de las barras deben ser completamente legibles
-    And no debe haber superposición de etiquetas
-    And los ejes deben tener suficiente espacio
+Scenario: Filtros se aplican automáticamente sin botón manual
+    Given estoy en el dashboard de analytics
+    When cambio la fecha "Desde" de "1 dic" a "15 nov"
+    Or cambio la fecha "Hasta" de "17 dic" a "20 dic"
+    Or cambio "Agrupar por" de "mes" a "semana"
+    Then el dashboard debe actualizarse automáticamente
+    And no debe existir botón "Ver métricas" o "Consultar"
+    And los datos deben reflejarse en menos de 2 segundos
 
-Scenario: Gráficos se ajustan en pantallas medianas (tablet)
-    Given estoy visualizando analytics en una tablet (768x1024px)
-    When cargo el dashboard
-    Then los gráficos deben redimensionarse proporcionalmente
-    And el tamaño de fuente debe ajustarse automáticamente
-    And las etiquetas deben rotarse si es necesario para legibilidad
-    And no debe requerirse scroll horizontal
+Scenario: Rango de fechas permite consultas históricas de 10 años
+    Given estoy seleccionando fechas en los filtros
+    When intento seleccionar fecha "Desde" del año 2020
+    Then el sistema debe permitir la selección
+    And debe poder consultar datos desde hace 10 años
+    When intento seleccionar fecha futura
+    Then el sistema debe bloquear la selección
+    And la fecha máxima debe ser hoy
 
-Scenario: Configuración responsive de Chart.js implementada
-    Given los gráficos usan Chart.js
-    When se configuran opciones de responsive
-    Then debe habilitarse: responsive: true
-    And debe configurarse: maintainAspectRatio: false (donde sea apropiado)
-    And debe implementarse autoSkip en ejes para evitar superposición
-    And debe usarse maxRotation en labels cuando sea necesario
+Scenario: Gráficos muestran rango de fechas real seleccionado
+    Given he seleccionado rango "15 nov - 20 dic"
+    When visualizo los gráficos de líneas y barras
+    Then el subtítulo debe mostrar "15 nov - 20 dic"
+    And NO debe mostrar texto genérico como "Últimos 30 días"
+    When selecciono un solo día "17 dic"
+    Then el subtítulo debe mostrar "17 dic"
 
-Scenario: Texto en barras ajustado con muchos datos
-    Given un gráfico de barras tiene más de 20 datos
-    When se renderiza el gráfico
-    Then las etiquetas del eje X deben rotarse 45° o 90°
-    And el texto debe truncarse con "..." si es muy largo
-    And debe mostrarse tooltip completo al hacer hover
+Scenario: Subtítulos de gráficos respetan idioma seleccionado
+    Given tengo el sistema en español
+    And he seleccionado rango "1 dic - 15 dic"
+    When visualizo los gráficos
+    Then el subtítulo debe mostrar "1 dic - 15 dic"
+    When cambio el idioma a inglés
+    Then el subtítulo debe actualizarse a "Dec 1 - Dec 15"
 
-Scenario: Prueba en múltiples resoluciones
-    Given existen gráficos de barras, líneas y pie charts
-    When se prueban en resoluciones:
-        - 1920x1080 (Desktop)
-        - 1366x768 (Laptop)
-        - 768x1024 (Tablet)
-        - 375x667 (Mobile)
-    Then todos los gráficos deben ser legibles en todas las resoluciones
-    And no debe haber texto superpuesto
-    And los colores deben mantener buen contraste
-    And los gráficos deben ser interactivos (hover, click)
+Scenario: Tabla muestra resumen por período sin repeticiones
+    Given estoy consultando datos agrupados por "semana"
+    When visualizo la tabla de datos
+    Then debe mostrar columnas: Período, Órdenes Completadas, Órdenes Canceladas, Ingresos Totales, Ingresos Perdidos
+    And cada período debe aparecer una sola vez
+    And NO debe mostrar productos individuales en la tabla
+    And los productos deben visualizarse solo en el gráfico de barras
+
+Scenario: Tabla incluye métricas de órdenes canceladas
+    Given existen pedidos cancelados en el período consultado
+    When visualizo la tabla de datos
+    Then debe existir columna "Órdenes Canceladas" con conteo
+    And debe existir columna "Ingresos Perdidos" con monto
+    And los valores de cancelados deben destacarse visualmente (color ámbar/rojo)
+    And los períodos sin cancelaciones deben mostrar 0
+
+Scenario: Exportación CSV refleja estructura de tabla actual
+    Given estoy visualizando la tabla con 5 períodos
+    When hago clic en "Exportar CSV"
+    And abro el archivo descargado
+    Then el CSV debe contener exactamente 5 filas de datos (+ encabezado)
+    And las columnas deben ser: period, totalOrders, totalCancelled, totalRevenue, lostRevenue
+    And NO debe incluir columnas de productos (productId, productName, quantity)
+    And los valores deben coincidir exactamente con la tabla visible
+
+Scenario: Gráfico de líneas muestra correctamente valores bajos
+    Given existen períodos con pocas órdenes (ej: 2, 3, 5 órdenes)
+    When visualizo el gráfico de líneas "Órdenes por período"
+    Then la línea verde debe ser visible y separada del eje X
+    And NO debe aparecer pegada al borde inferior
+    And debe aplicarse margen del 10% en la escala vertical
+    And los valores deben ser legibles en todos los puntos
 ```
