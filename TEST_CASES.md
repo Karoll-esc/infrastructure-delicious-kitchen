@@ -285,49 +285,54 @@
 
 ---
 
-## HU-013: Definir y Documentar Reglas Claras para Creación de Reseñas
+## HU-013: Sistema de Encuestas de Proceso (Surveys)
 
 ### Casos Positivos
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-013-P01 | Documentar momento permitido para crear reseña | 1. Definir reglas de negocio<br>2. Crear/actualizar BUSINESS_RULES.md<br>3. Especificar estados y límites | Estados: ready, completed<br>Límite: 7 días | - Regla clara: "Cliente puede dejar reseña cuando pedido está en 'ready' o 'completed'"<br>- Límite tiempo definido<br>- Documentado en BUSINESS_RULES.md |
-| TC-013-P02 | Definir límite de reseñas por pedido | 1. Consultar reglas<br>2. Documentar política | N/A | - Especificado: "Solo UNA reseña por pedido"<br>- Política de edición definida<br>- Límite tiempo para edición (si aplica) |
+| TC-013-P01 | Cliente envía encuesta exitosamente | 1. Pedido ORD-777 en estado "preparing"<br>2. Cliente completa encuesta<br>3. POST a /api/surveys<br>4. Verificar creación | orderNumber: ORD-777<br>status: preparing<br>waitTimeRating: 4<br>staffAttentionRating: 5 | - Sistema valida ratings 1-5<br>- Encuesta guardada vinculada a ORD-777<br>- HTTP 201<br>- Body: {"message": "¡Gracias por tu opinión!"} |
+| TC-013-P02 | Encuesta válida para pedido en estado ready | 1. Pedido ORD-888 en estado "ready"<br>2. Cliente completa encuesta<br>3. POST a /api/surveys | orderNumber: ORD-888<br>status: ready<br>waitTimeRating: 3<br>staffAttentionRating: 4 | - Sistema acepta estado "ready"<br>- Encuesta creada exitosamente<br>- HTTP 201<br>- Mensaje: "¡Gracias por tu opinión!" |
 
 ### Casos Negativos
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-013-N01 | Política para pedidos cancelados | 1. Revisar reglas para cancelled<br>2. Verificar documentación | Estado: cancelled | - Especificado: "No se permiten reseñas para pedidos cancelados"<br>- Botón "Dejar reseña" NO visible para cancelled |
+| TC-013-N01 | Sistema previene encuestas duplicadas | 1. Pedido ORD-999 ya tiene encuesta<br>2. Cliente intenta enviar otra encuesta para mismo pedido<br>3. POST a /api/surveys | orderNumber: ORD-999<br>(ya tiene encuesta) | - Sistema detecta duplicado<br>- HTTP 409<br>- Body: {"error": "Ya enviaste tu opinión"} |
+| TC-013-N02 | Encuesta con ratings fuera de rango rechazada | 1. Cliente completa encuesta con rating inválido<br>2. POST a /api/surveys<br>3. Verificar rechazo | orderNumber: ORD-111<br>waitTimeRating: 0<br>staffAttentionRating: 6 | - Sistema valida rango 1-5<br>- HTTP 400<br>- Body: {"error": "Ratings deben estar entre 1 y 5"} |
 
 ### Casos Borde
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-013-B01 | Política para clientes anónimos | 1. Revisar reglas para usuarios sin registro<br>2. Documentar mecanismo vinculación | N/A | - Especificado cómo vincular reseña anónima con pedido<br>- Mecanismo identificación definido (número pedido + email)<br>- Claridad si se permite sin registro |
+| TC-013-B01 | Encuesta con ratings en límite inferior válido | 1. Cliente envía todos ratings = 1<br>2. POST a /api/surveys | orderNumber: ORD-222<br>waitTimeRating: 1<br>staffAttentionRating: 1 | - Sistema acepta rating 1<br>- Encuesta creada<br>- HTTP 201 |
+| TC-013-B02 | Encuesta con ratings en límite superior válido | 1. Cliente envía todos ratings = 5<br>2. POST a /api/surveys | orderNumber: ORD-333<br>waitTimeRating: 5<br>staffAttentionRating: 5 | - Sistema acepta rating 5<br>- Encuesta creada<br>- HTTP 201 |
 
 ---
 
-## HU-014: Implementar Validación de Reglas de Reseñas en Backend
+## HU-014: Sistema de Reseñas Públicas (Reviews)
 
 ### Casos Positivos
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-014-P01 | Crear reseña exitosa para pedido ready | 1. Pedido ORD-777 con status=ready sin reseñas<br>2. POST a /api/reviews<br>3. Verificar creación | orderId: ORD-777<br>rating: 5<br>comment: "Excelente!" | - Pedido existe verificado<br>- Estado es ready/completed<br>- No existe reseña previa<br>- Reseña creada con status "pending_approval"<br>- HTTP 201 |
+| TC-014-P01 | Cliente crea reseña sin orderNumber | 1. Cliente accede a /reviews/new<br>2. Completa campos requeridos<br>3. POST sin orderNumber<br>4. Verificar creación | foodRating: 5<br>tasteRating: 4<br>comment: "Delicioso"<br>orderNumber: (omitido) | - Reseña creada con orderNumber = "N/A"<br>- status = "pending"<br>- Sin metadata de pedido<br>- HTTP 201 |
+| TC-014-P02 | Reseña con orderNumber válido se enriquece | 1. Cliente proporciona orderNumber existente<br>2. POST a /reviews/new<br>3. Sistema busca pedido<br>4. Verificar metadata | orderNumber: ORD-777<br>foodRating: 5<br>tasteRating: 5<br>(pedido existe en BD) | - Sistema encuentra pedido<br>- Agrega metadata: items, total, orderDate<br>- Reseña creada enriquecida<br>- HTTP 201 |
+| TC-014-P03 | Cliente puede dejar múltiples reseñas | 1. Cliente ya tiene reseña previa<br>2. Crea nueva reseña<br>3. POST a /reviews/new | Cliente con reseña existente<br>Nueva reseña diferente | - Sistema NO valida duplicados<br>- Segunda reseña aceptada<br>- Ambas reseñas existen<br>- HTTP 201 |
 
 ### Casos Negativos
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-014-N01 | Rechazar reseña para pedido en preparing | 1. Pedido ORD-888 con status=preparing<br>2. POST a /api/reviews | orderId: ORD-888<br>status: preparing | - HTTP 400<br>- Body: {"error": "No puedes dejar reseña para un pedido que aún no está listo"} |
-| TC-014-N02 | Rechazar reseña duplicada | 1. Pedido ORD-999 ya tiene reseña<br>2. POST otra reseña para ORD-999 | orderId: ORD-999<br>(ya tiene reseña) | - HTTP 400<br>- Body: {"error": "Ya has dejado una reseña para este pedido"} |
+| TC-014-N01 | Rechazar reseña sin campos requeridos | 1. Cliente omite foodRating<br>2. POST a /reviews/new<br>3. Verificar validación | tasteRating: 4<br>foodRating: (omitido) | - Sistema detecta campo faltante<br>- HTTP 400<br>- Body: {"error": "foodRating y tasteRating son requeridos"} |
+| TC-014-N02 | Rechazar reseña con ratings inválidos | 1. Cliente envía ratings fuera de rango<br>2. POST a /reviews/new | foodRating: 6<br>tasteRating: 0 | - Sistema valida rango 1-5<br>- HTTP 400<br>- Body: {"error": "Ratings deben estar entre 1 y 5"} |
 
 ### Casos Borde
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-014-B01 | Rechazar reseña fuera de límite de tiempo | 1. Pedido ORD-555 marcado ready hace 8 días<br>2. POST reseña<br>3. Verificar rechazo | orderId: ORD-555<br>readyAt: hace 8 días<br>Límite: 7 días | - HTTP 400<br>- Body: {"error": "El tiempo para dejar reseña ha expirado (máximo 7 días)"} |
+| TC-014-B01 | Reseña con orderNumber inválido se acepta | 1. Cliente proporciona orderNumber que NO existe<br>2. POST a /reviews/new<br>3. Sistema no encuentra pedido<br>4. Verificar creación | orderNumber: ORD-NOEXISTE<br>foodRating: 4<br>tasteRating: 3 | - Sistema no encuentra pedido<br>- Reseña creada SIN metadata<br>- orderNumber conservado<br>- NO rechaza solicitud<br>- HTTP 201 |
+| TC-014-B02 | Reseña solo con campos requeridos | 1. Cliente envía solo foodRating y tasteRating<br>2. Sin comment ni orderNumber<br>3. POST a /reviews/new | foodRating: 3<br>tasteRating: 4 | - Reseña creada con mínimos campos<br>- orderNumber = "N/A"<br>- comment = null/vacío<br>- HTTP 201 |
 
 ---
 
