@@ -428,3 +428,127 @@
 |----|-------------|-------|------------------|-------------------|
 | TC-018-B01 | Verificar funcionamiento en diferentes entornos | 1. Configurar .env.development<br>2. Ejecutar en dev<br>3. Configurar .env.production<br>4. Compilar para prod | Dev: http://localhost:3000<br>Prod: https://api.production.com | - App conecta a URLs de desarrollo en dev<br>- Bundle incluye URLs de producción en prod<br>- Funciona correctamente en ambos |
 | TC-018-B02 | Reemplazar URLs hardcodeadas con variables | 1. Actualizar código para usar import.meta.env<br>2. Compilar | N/A | - URLs leídas desde variables de entorno<br>- Sin URLs hardcodeadas en código<br>- Compilación exitosa |
+
+---
+
+## HU-019: Implementar Recuperación de Contraseña
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-019-P01 | Solicitar recuperación con email válido | 1. Navegar a /login<br>2. Clic en "¿Olvidaste tu contraseña?"<br>3. Ingresar email registrado<br>4. Clic en "Enviar enlace de recuperación" | Email: admin@test.com | - Correo enviado con enlace<br>- Mensaje: "Se ha enviado un enlace de recuperación a tu correo"<br>- Enlace válido por 1 hora |
+| TC-019-P02 | Restablecer contraseña con enlace válido | 1. Abrir enlace de recuperación del correo<br>2. Ingresar nueva contraseña válida<br>3. Confirmar contraseña<br>4. Clic en "Restablecer contraseña" | Nueva contraseña: NewPass123!<br>Confirmar: NewPass123! | - Contraseña actualizada en Firebase<br>- Mensaje: "Contraseña restablecida exitosamente"<br>- Redirigido a /login<br>- Puede iniciar sesión con nueva contraseña |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-019-N01 | Solicitar recuperación con email no registrado | 1. Ingresar email que no existe en sistema<br>2. Clic en enviar | Email: noexiste@test.com | - Mensaje genérico: "Si el correo existe, recibirás un enlace"<br>- No revela si email existe (seguridad)<br>- No se envía correo |
+| TC-019-N02 | Intentar usar enlace expirado | 1. Obtener enlace de recuperación<br>2. Esperar más de 1 hora<br>3. Intentar usar enlace | Enlace expirado (>1h) | - Mensaje: "Este enlace ha expirado. Solicita uno nuevo"<br>- No permite restablecer contraseña<br>- Opción de solicitar nuevo enlace |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-019-B01 | Validación de contraseña débil | 1. Abrir enlace válido<br>2. Ingresar contraseña débil<br>3. Intentar restablecer | Nueva contraseña: 123 | - Mensaje: "La contraseña debe tener mín. 8 caracteres, mayúscula, minúscula y número"<br>- Botón restablecer deshabilitado |
+| TC-019-B02 | Contraseñas no coinciden | 1. Ingresar nueva contraseña<br>2. Confirmar con contraseña diferente | Nueva: Pass123!<br>Confirmar: Pass456! | - Mensaje: "Las contraseñas no coinciden"<br>- No permite restablecer |
+
+---
+
+## HU-020: Crear y Listar Productos del Menú
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-020-P01 | Crear producto nuevo exitosamente | 1. Login como admin<br>2. Navegar a "Gestión de Productos"<br>3. Clic en "Agregar Producto"<br>4. Completar formulario<br>5. Clic en "Guardar" | Nombre: Hamburguesa Especial<br>Descripción: Con queso cheddar<br>Precio: 12.99<br>Categoría: Hamburguesas<br>Estado: Activo | - Producto guardado en MongoDB<br>- Mensaje: "Producto creado exitosamente"<br>- Producto aparece en lista<br>- Visible en menú público |
+| TC-020-P02 | Listar todos los productos | 1. Login como admin<br>2. Navegar a "Gestión de Productos" | N/A | - Tabla con todos los productos<br>- Columnas: nombre, precio, categoría, estado<br>- Opción de filtrar por categoría<br>- Buscador por nombre |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-020-N01 | Crear producto sin campos obligatorios | 1. Abrir formulario crear producto<br>2. Dejar campos vacíos<br>3. Intentar guardar | Nombre: (vacío)<br>Precio: (vacío)<br>Categoría: (vacío) | - Mensajes de error:<br>  "El nombre es obligatorio"<br>  "El precio es obligatorio"<br>  "La categoría es obligatoria"<br>- Producto NO guardado |
+| TC-020-N02 | Crear producto con precio inválido | 1. Completar formulario<br>2. Ingresar precio negativo<br>3. Intentar guardar | Precio: -5.99 | - Mensaje: "El precio debe ser un número positivo"<br>- Producto NO guardado |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-020-B01 | Productos activos visibles en menú público | 1. Crear producto con estado Activo<br>2. Crear producto con estado Inactivo<br>3. Acceder al menú como cliente | Producto A: Activo<br>Producto B: Inactivo | - Cliente ve solo Producto A<br>- Producto B NO visible en menú público |
+| TC-020-B02 | Filtrar productos por categoría | 1. Tener productos en múltiples categorías<br>2. Seleccionar filtro "Hamburguesas" | Filtro: Hamburguesas | - Solo productos de categoría Hamburguesas mostrados<br>- Otras categorías ocultas |
+
+---
+
+## HU-021: Actualizar y Desactivar Productos del Menú
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-021-P01 | Actualizar producto exitosamente | 1. Seleccionar producto "Hamburguesa Clásica"<br>2. Clic en "Editar"<br>3. Cambiar precio de $10.99 a $11.99<br>4. Modificar descripción<br>5. Guardar cambios | Precio anterior: $10.99<br>Precio nuevo: $11.99<br>Nueva descripción: "Con ingredientes frescos" | - Cambios guardados en MongoDB<br>- Mensaje: "Producto actualizado exitosamente"<br>- Cambios reflejados inmediatamente en menú público |
+| TC-021-P02 | Desactivar producto temporalmente | 1. Seleccionar producto activo "Ensalada César"<br>2. Clic en "Desactivar"<br>3. Confirmar acción | Producto: Ensalada César<br>Estado actual: Activo | - Estado cambia a "Inactivo"<br>- Mensaje: "Producto desactivado exitosamente"<br>- Producto desaparece del menú público<br>- Producto permanece en BD |
+| TC-021-P03 | Reactivar producto inactivo | 1. Filtrar productos inactivos<br>2. Seleccionar producto<br>3. Clic en "Activar" | Estado actual: Inactivo | - Estado cambia a "Activo"<br>- Producto visible en menú público<br>- Mensaje: "Producto activado exitosamente" |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-021-N01 | Actualizar con precio inválido | 1. Editar producto<br>2. Ingresar precio negativo<br>3. Intentar guardar | Precio: -10.00 | - Mensaje: "El precio debe ser un número positivo"<br>- Cambios NO guardados<br>- Producto mantiene información anterior |
+| TC-021-N02 | Actualizar con nombre vacío | 1. Editar producto<br>2. Borrar nombre<br>3. Intentar guardar | Nombre: (vacío) | - Mensaje: "El nombre es obligatorio"<br>- Cambios NO guardados |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-021-B01 | Historial de cambios de precio | 1. Actualizar precio 3 veces<br>2. Ver detalles del producto<br>3. Acceder a "Historial de Precios" | Precio 1: $10.99 (01/12)<br>Precio 2: $11.99 (10/12)<br>Precio 3: $12.99 (15/12) | - Lista con 3 entradas<br>- Cada entrada: precio anterior, precio nuevo, fecha, usuario<br>- Ordenado del más reciente al más antiguo |
+
+---
+
+## HU-022: Validar y Corregir Datos en Reportes de Analytics
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-022-P01 | Auditoría identifica inconsistencias | 1. Ejecutar script de auditoría de analytics<br>2. Comparar reportes con BD | Script: auditAnalyticsQueries.js | - Reporte generado<br>- Inconsistencias identificadas<br>- Pedidos cancelados incorrectamente incluidos detectados<br>- Sugerencias de corrección |
+| TC-022-P02 | Total de órdenes coincide con BD | 1. Ver reporte "Total de Órdenes: 150"<br>2. Ejecutar query MongoDB con mismo filtro<br>3. Comparar resultados | Filtro: Último mes<br>Estados: completed, delivered | - Conteo reporte: 150<br>- Conteo BD: 150<br>- Coinciden exactamente<br>- Pedidos cancelados excluidos |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-022-N01 | Detectar inclusión incorrecta de cancelados | 1. Ver "Total de Órdenes Completadas: 200"<br>2. Query BD incluye status=cancelled<br>3. Comparar | Query incorrecta incluye: cancelled | - Auditoría detecta discrepancia<br>- Identifica que cancelados están siendo contados<br>- Alerta generada |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-022-B01 | Validación automática de consistencia | 1. Sistema genera reportes automáticos<br>2. Validación ejecuta cada métrica<br>3. Detecta discrepancia >1% | Reporte: 100 órdenes<br>BD real: 95 órdenes<br>Discrepancia: 5% | - Alerta enviada a administrador<br>- Registrado en logs<br>- Email notificación con detalles |
+| TC-022-B02 | Exportación CSV datos exactos | 1. Ver reporte con 100 pedidos<br>2. Exportar a CSV<br>3. Contar filas en CSV<br>4. Validar cada fila con BD | Reporte: 100 pedidos completados | - CSV contiene 100 filas + encabezados<br>- Cada fila corresponde a pedido en BD<br>- Valores (fecha, monto, estado) coinciden exactamente |
+
+---
+
+## HU-023: Mejorar Responsividad de Gráficos en Analytics
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-023-P01 | Gráficos ajustados en desktop | 1. Abrir analytics en 1920x1080px<br>2. Verificar todos los gráficos | Resolución: 1920x1080 | - Todos los gráficos renderizados correctamente<br>- Textos de barras legibles<br>- Sin superposición de etiquetas<br>- Ejes con suficiente espacio |
+| TC-023-P02 | Gráficos ajustados en tablet | 1. Abrir analytics en tablet 768x1024px<br>2. Verificar gráficos | Resolución: 768x1024 | - Gráficos redimensionados proporcionalmente<br>- Fuente ajustada automáticamente<br>- Etiquetas rotadas si necesario<br>- Sin scroll horizontal |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-023-N01 | Detectar superposición de texto | 1. Gráfico con 30 barras<br>2. Sin configuración responsive<br>3. Ver en 1366x768 | Datos: 30 categorías<br>Sin autoSkip | - Etiquetas superpuestas (problema detectado)<br>- Texto ilegible<br>- Requerirá corrección |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-023-B01 | Configuración Chart.js responsive | 1. Verificar opciones de Chart.js<br>2. Revisar código | Configuración: { responsive: ?, maintainAspectRatio: ?, autoSkip: ? } | - responsive: true<br>- maintainAspectRatio: false (donde apropiado)<br>- autoSkip: true en ejes<br>- maxRotation configurado en labels |
+| TC-023-B02 | Prueba en múltiples resoluciones | 1. Abrir analytics en cada resolución<br>2. Verificar legibilidad | Resoluciones:<br>- 1920x1080<br>- 1366x768<br>- 768x1024<br>- 375x667 | - Todos gráficos legibles en todas resoluciones<br>- Sin texto superpuesto<br>- Buen contraste<br>- Interactivos (hover, click) |
+| TC-023-B03 | Texto truncado con tooltip | 1. Gráfico con etiquetas largas<br>2. Verificar rendering | Etiqueta: "Hamburguesa Especial con Queso Extra" | - Texto truncado: "Hamburguesa Espe..."<br>- Tooltip completo al hacer hover<br>- Legible y sin superposición |

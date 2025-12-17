@@ -713,3 +713,300 @@ Scenario: Sistema funciona en múltiples ambientes
     Then debe conectarse a las URLs de producción
     And la aplicación debe funcionar correctamente en ambos ambientes
 ```
+
+---
+
+# [HU-019] — Implementar Recuperación de Contraseña
+
+## Descripción
+
+* **Como:** Usuario del sistema que olvidó su contraseña
+* **Quiero:** Poder recuperar el acceso a mi cuenta mediante un enlace de restablecimiento enviado a mi correo electrónico
+* **Para:** Restablecer mi contraseña de forma segura sin necesidad de contactar al administrador
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Solicitud exitosa de recuperación de contraseña
+    Given estoy en la página de login
+    When hago clic en "¿Olvidaste tu contraseña?"
+    And ingreso mi correo electrónico registrado
+    And hago clic en "Enviar enlace de recuperación"
+    Then debe enviarse un correo con enlace de restablecimiento
+    And debo ver un mensaje: "Se ha enviado un enlace de recuperación a tu correo"
+    And el enlace debe expirar después de 1 hora
+
+Scenario: Restablecimiento exitoso de contraseña
+    Given recibí un correo con enlace de recuperación válido
+    When hago clic en el enlace del correo
+    And ingreso una nueva contraseña válida
+    And confirmo la nueva contraseña
+    And hago clic en "Restablecer contraseña"
+    Then mi contraseña debe actualizarse en Firebase Auth
+    And debo ver mensaje: "Contraseña restablecida exitosamente"
+    And debo ser redirigido a la página de login
+
+Scenario: Intento de recuperación con correo no registrado
+    Given estoy en la página de recuperación de contraseña
+    When ingreso un correo que no está registrado en el sistema
+    And hago clic en "Enviar enlace de recuperación"
+    Then debe mostrarse mensaje: "Si el correo existe, recibirás un enlace de recuperación"
+    And no debe revelarse si el correo existe o no (seguridad)
+
+Scenario: Intento de usar enlace de recuperación expirado
+    Given recibí un correo con enlace de recuperación hace más de 1 hora
+    When hago clic en el enlace expirado
+    Then debo ver mensaje: "Este enlace ha expirado. Solicita uno nuevo"
+    And debo poder solicitar un nuevo enlace de recuperación
+
+Scenario: Validación de contraseña nueva
+    Given estoy en la página de restablecimiento con enlace válido
+    When ingreso una contraseña que no cumple los requisitos
+    Then debo ver mensaje de error indicando los requisitos
+    And el botón de restablecer debe estar deshabilitado
+    When ingreso una contraseña válida
+    Then el mensaje de error debe desaparecer
+    And el botón de restablecer debe habilitarse
+```
+
+---
+
+# [HU-020] — Crear y Listar Productos del Menú
+
+## Descripción
+
+* **Como:** Administrador del restaurante
+* **Quiero:** Poder crear nuevos productos y visualizar el catálogo completo del menú desde el panel administrativo
+* **Para:** Mantener actualizado el menú sin necesidad de modificar código fuente y permitir flexibilidad en la oferta de productos
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Crear producto nuevo exitosamente
+    Given estoy autenticado como administrador
+    And estoy en la sección "Gestión de Productos"
+    When hago clic en "Agregar Producto"
+    And completo el formulario con información válida:
+        | Campo       | Valor                    |
+        | Nombre      | Hamburguesa Especial     |
+        | Descripción | Con queso cheddar y tocino |
+        | Precio      | 12.99                    |
+        | Categoría   | Hamburguesas             |
+        | Imagen URL  | https://example.com/img.jpg |
+        | Estado      | Activo                   |
+    And hago clic en "Guardar"
+    Then el producto debe guardarse en MongoDB
+    And debo ver mensaje: "Producto creado exitosamente"
+    And el nuevo producto debe aparecer en la lista de productos
+
+Scenario: Listar todos los productos existentes
+    Given estoy autenticado como administrador
+    When navego a "Gestión de Productos"
+    Then debo ver una tabla con todos los productos
+    And cada producto debe mostrar: nombre, precio, categoría, estado
+    And debe haber opción de filtrar por categoría
+    And debe haber opción de buscar por nombre
+
+Scenario: Validación de campos obligatorios al crear
+    Given estoy en el formulario de creación de producto
+    When intento guardar sin completar campos obligatorios
+    Then debo ver mensajes de error en campos vacíos:
+        - "El nombre es obligatorio"
+        - "El precio es obligatorio"
+        - "La categoría es obligatoria"
+    And el producto no debe guardarse
+
+Scenario: Validación de precio válido
+    Given estoy creando un nuevo producto
+    When ingreso un precio negativo o no numérico
+    And intento guardar
+    Then debo ver mensaje: "El precio debe ser un número positivo"
+    And el producto no debe guardarse
+
+Scenario: Productos activos visibles en menú público
+    Given existen productos con estado "Activo"
+    When un cliente accede a la página de pedidos
+    Then solo debe ver productos con estado "Activo"
+    And los productos inactivos no deben mostrarse en el menú público
+```
+
+---
+
+# [HU-021] — Actualizar y Desactivar Productos del Menú
+
+## Descripción
+
+* **Como:** Administrador del restaurante
+* **Quiero:** Poder editar información de productos existentes y desactivarlos cuando ya no estén disponibles
+* **Para:** Mantener el menú actualizado con precios, descripciones correctas y ocultar productos temporalmente sin eliminarlos de la base de datos
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Actualizar información de producto exitosamente
+    Given estoy autenticado como administrador
+    And existe un producto "Hamburguesa Clásica" con precio $10.99
+    When selecciono el producto de la lista
+    And hago clic en "Editar"
+    And actualizo el precio a $11.99
+    And modifico la descripción
+    And hago clic en "Guardar cambios"
+    Then los cambios deben guardarse en MongoDB
+    And debo ver mensaje: "Producto actualizado exitosamente"
+    And los cambios deben reflejarse inmediatamente en el menú público
+
+Scenario: Desactivar producto temporalmente
+    Given existe un producto activo "Ensalada César"
+    When selecciono el producto
+    And hago clic en "Desactivar"
+    And confirmo la acción
+    Then el estado del producto debe cambiar a "Inactivo"
+    And debo ver mensaje: "Producto desactivado exitosamente"
+    And el producto debe desaparecer del menú público
+    And el producto debe permanecer en la base de datos
+
+Scenario: Reactivar producto previamente desactivado
+    Given existe un producto con estado "Inactivo"
+    When selecciono el producto de la lista (incluyendo filtro de inactivos)
+    And hago clic en "Activar"
+    Then el estado debe cambiar a "Activo"
+    And el producto debe volver a mostrarse en el menú público
+    And debo ver mensaje: "Producto activado exitosamente"
+
+Scenario: Historial de cambios de precio
+    Given un producto ha tenido múltiples actualizaciones de precio
+    When visualizo los detalles del producto
+    Then debo poder acceder a "Historial de Precios"
+    And debo ver una lista con:
+        - Precio anterior
+        - Precio nuevo
+        - Fecha y hora del cambio
+        - Usuario que realizó el cambio
+    And el historial debe estar ordenado del más reciente al más antiguo
+
+Scenario: Validación al actualizar con datos inválidos
+    Given estoy editando un producto existente
+    When ingreso un precio negativo
+    Or dejo el nombre vacío
+    And intento guardar cambios
+    Then debo ver mensajes de error correspondientes
+    And los cambios no deben guardarse
+    And el producto debe mantener su información anterior
+```
+
+---
+
+# [HU-022] — Validar y Corregir Datos en Reportes de Analytics
+
+## Descripción
+
+* **Como:** Administrador que toma decisiones de negocio basadas en métricas
+* **Quiero:** Que los reportes de analytics muestren datos precisos y consistentes con la base de datos real
+* **Para:** Tomar decisiones informadas sin discrepancias entre reportes y datos reales, especialmente considerando pedidos cancelados y filtros de fecha
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Auditoría de queries de analytics identifica inconsistencias
+    Given existen reportes de analytics con posibles discrepancias
+    When se ejecuta auditoría de queries
+    Then debe identificarse si pedidos cancelados están siendo incluidos incorrectamente
+    And debe verificarse si filtros de fecha funcionan correctamente
+    And debe crearse reporte de inconsistencias encontradas
+
+Scenario: Total de órdenes coincide con base de datos
+    Given existe un reporte que muestra "Total de Órdenes: 150"
+    When se consulta directamente MongoDB con el mismo filtro de fecha
+    Then el conteo de la BD debe coincidir exactamente con el reporte
+    And los pedidos cancelados deben ser excluidos del conteo
+    Or claramente marcados como categoría separada
+
+Scenario: Pedidos cancelados claramente separados en reportes
+    Given existen pedidos con estado "cancelled"
+    When visualizo el dashboard de analytics
+    Then debe haber una sección separada para "Pedidos Cancelados"
+    And el "Total de Órdenes Completadas" no debe incluir cancelados
+    And debe mostrarse claramente: "Completados: X | Cancelados: Y"
+
+Scenario: Filtros de fecha funcionan correctamente
+    Given estoy en el dashboard de analytics
+    When selecciono rango: "Del 1 al 15 de diciembre"
+    And hago clic en "Aplicar filtro"
+    Then solo deben mostrarse pedidos con fecha dentro del rango
+    And el conteo debe corresponder exactamente a pedidos en ese período
+    When comparo con query SQL/MongoDB directa
+    Then los resultados deben ser idénticos
+
+Scenario: Exportación CSV refleja datos exactos
+    Given visualizo un reporte con 100 pedidos completados
+    When hago clic en "Exportar a CSV"
+    And abro el archivo descargado
+    Then el CSV debe contener exactamente 100 filas (más encabezados)
+    And cada fila debe corresponder a un pedido en la BD
+    And los valores (fecha, monto, estado) deben coincidir exactamente
+
+Scenario: Validación automática de consistencia de reportes
+    Given se generan reportes periódicamente
+    When se ejecuta el sistema de validación automática
+    Then debe compararse cada métrica con query directa a BD
+    And si hay discrepancia mayor al 1%
+    Then debe enviarse alerta al administrador
+    And debe registrarse en logs para auditoría
+```
+
+---
+
+# [HU-023] — Mejorar Responsividad de Gráficos en Analytics
+
+## Descripción
+
+* **Como:** Administrador que revisa reportes desde diferentes dispositivos
+* **Quiero:** Que los gráficos de analytics se ajusten correctamente en diferentes tamaños de pantalla sin superposición de texto
+* **Para:** Poder analizar métricas de forma legible desde desktop, tablet o incluso móvil sin perder información visual
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Gráficos se ajustan en pantallas grandes (desktop)
+    Given estoy visualizando analytics en una pantalla de 1920x1080px
+    When cargo el dashboard
+    Then todos los gráficos deben renderizarse correctamente
+    And los textos de las barras deben ser completamente legibles
+    And no debe haber superposición de etiquetas
+    And los ejes deben tener suficiente espacio
+
+Scenario: Gráficos se ajustan en pantallas medianas (tablet)
+    Given estoy visualizando analytics en una tablet (768x1024px)
+    When cargo el dashboard
+    Then los gráficos deben redimensionarse proporcionalmente
+    And el tamaño de fuente debe ajustarse automáticamente
+    And las etiquetas deben rotarse si es necesario para legibilidad
+    And no debe requerirse scroll horizontal
+
+Scenario: Configuración responsive de Chart.js implementada
+    Given los gráficos usan Chart.js
+    When se configuran opciones de responsive
+    Then debe habilitarse: responsive: true
+    And debe configurarse: maintainAspectRatio: false (donde sea apropiado)
+    And debe implementarse autoSkip en ejes para evitar superposición
+    And debe usarse maxRotation en labels cuando sea necesario
+
+Scenario: Texto en barras ajustado con muchos datos
+    Given un gráfico de barras tiene más de 20 datos
+    When se renderiza el gráfico
+    Then las etiquetas del eje X deben rotarse 45° o 90°
+    And el texto debe truncarse con "..." si es muy largo
+    And debe mostrarse tooltip completo al hacer hover
+
+Scenario: Prueba en múltiples resoluciones
+    Given existen gráficos de barras, líneas y pie charts
+    When se prueban en resoluciones:
+        - 1920x1080 (Desktop)
+        - 1366x768 (Laptop)
+        - 768x1024 (Tablet)
+        - 375x667 (Mobile)
+    Then todos los gráficos deben ser legibles en todas las resoluciones
+    And no debe haber texto superpuesto
+    And los colores deben mantener buen contraste
+    And los gráficos deben ser interactivos (hover, click)
+```
