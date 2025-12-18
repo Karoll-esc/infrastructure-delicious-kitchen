@@ -7,7 +7,7 @@
 
 Este documento refleja la **transformación del sistema** desde un estado **AS IS** (ambiguo, con deuda técnica y riesgos de seguridad) hacia un estado **TO BE** (refinado, robusto y con reglas de negocio explícitas).
 
-La evolución se organizó mediante **18 Historias de Usuario** que abordan problemas críticos de seguridad, ambigüedades funcionales, deuda técnica y consolidación de arquitectura.
+La evolución se organizó mediante **24 Historias de Usuario** que abordan problemas críticos de seguridad, ambigüedades funcionales, deuda técnica y consolidación de arquitectura.
 
 ---
 
