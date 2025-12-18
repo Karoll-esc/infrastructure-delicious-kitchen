@@ -13,7 +13,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 1. Seguridad y Protección de Credenciales
 
-### 🔴 AS IS: Estado Crítico
+### AS IS: Estado Crítico
 
 **Problema identificado:**
 - El paquete `firebase-admin` estaba instalado en el **frontend** (cliente)
@@ -25,7 +25,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Arquitectura Segura
+### TO BE: Arquitectura Segura
 
 **Solución implementada:**
 
@@ -52,7 +52,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 2. Autenticación y Gestión de Sesiones
 
-### 🔴 AS IS: Sistema Dual No Integrado
+### AS IS: Sistema Dual No Integrado
 
 **Problemas identificados:**
 1. **AuthContext simulado:** El frontend usaba un estado local que simulaba autenticación, sin validación real con Firebase
@@ -64,7 +64,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Autenticación Unificada y Robusta
+### TO BE: Autenticación Unificada y Robusta
 
 **Solución implementada:**
 
@@ -109,7 +109,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 3. Reglas de Negocio: Cancelación de Pedidos
 
-### 🟡 AS IS: Flujo Incompleto y Ambiguo
+### AS IS: Flujo Incompleto y Ambiguo
 
 **Problemas identificados:**
 1. **Regla poco clara:** "Se puede cancelar solo antes de preparación" → ¿Qué estados exactos permiten cancelación?
@@ -121,7 +121,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Validación Robusta en Backend + Frontend
+###TO BE: Validación Robusta en Backend + Frontend
 
 **Solución implementada:**
 
@@ -159,7 +159,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 4. Integridad de Datos: Usuarios y Bases de Datos
 
-### 🔴 AS IS: Doble Fuente de Verdad
+### AS IS: Doble Fuente de Verdad
 
 **Problemas identificados:**
 1. **Usuarios duplicados:**
@@ -178,7 +178,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Fuente de Verdad Única y Sincronizada
+###  TO BE: Fuente de Verdad Única y Sincronizada
 
 **Solución implementada:**
 
@@ -210,7 +210,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 5. Mantenibilidad: Código Duplicado y Configuración
 
-### 🟡 AS IS: Duplicación y Hardcodeo
+###  AS IS: Duplicación y Hardcodeo
 
 **Problemas identificados:**
 1. **Código duplicado en Analytics:**
@@ -232,7 +232,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Código Consolidado y Configuración Centralizada
+###  TO BE: Código Consolidado y Configuración Centralizada
 
 **Solución implementada:**
 
@@ -273,7 +273,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 6. Estados de Pedido: Claridad y Consistencia
 
-### 🟡 AS IS: Nomenclatura Inconsistente
+###  AS IS: Nomenclatura Inconsistente
 
 **Problemas identificados:**
 - Estados mencionados de diferentes formas:
@@ -289,7 +289,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Estados Unificados y Documentados
+### TO BE: Estados Unificados y Documentados
 
 **Solución implementada:**
 
@@ -324,7 +324,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 7. Experiencia de Usuario: Reseñas y Feedback
 
-### 🟡 AS IS: Momento de Creación Ambiguo
+###  AS IS: Momento de Creación Ambiguo
 
 **Problemas identificados:**
 1. **Regla poco clara:** "Se puede agregar reseña cuando el pedido esté listo"
@@ -339,7 +339,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Reglas Explícitas de Reseñas
+### TO BE: Reglas Explícitas de Reseñas
 
 **Solución implementada:**
 
@@ -377,7 +377,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 8. Internacionalización: Experiencia Multiidioma Completa
 
-### 🟢 AS IS: i18n Parcialmente Implementado
+###  AS IS: i18n Parcialmente Implementado
 
 **Problemas identificados:**
 1. **Generación de orden sin traducir:**
@@ -396,7 +396,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Soporte Multiidioma Completo
+###  TO BE: Soporte Multiidioma Completo
 
 **Solución implementada:**
 
@@ -425,7 +425,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 9. Analytics y Reportes: Precisión y Experiencia de Usuario
 
-### 🟡 AS IS: Datos Inconsistentes y UX Deficiente
+###  AS IS: Datos Inconsistentes y UX Deficiente
 
 **Problemas identificados:**
 
@@ -447,7 +447,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Reportes Precisos y Dashboard Optimizado
+###  TO BE: Reportes Precisos y Dashboard Optimizado
 
 **Solución implementada:**
 
@@ -490,7 +490,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ## 10. Notificaciones Offline: Cliente Siempre Informado
 
-### 🟡 AS IS: Notificaciones Solo en Tiempo Real
+###  AS IS: Notificaciones Solo en Tiempo Real
 
 **Problemas identificados:**
 - Sistema de notificaciones basado únicamente en SSE (Server-Sent Events)
@@ -502,7 +502,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 ---
 
-### ✅ TO BE: Notificaciones Multicanal con Email
+###  TO BE: Notificaciones Multicanal con Email
 
 **Solución implementada:**
 
