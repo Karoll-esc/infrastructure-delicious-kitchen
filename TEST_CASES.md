@@ -22,7 +22,7 @@
 
 | ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
 |----|-------------|-------|------------------|-------------------|
-| TC-001-B01 | Verificar reducción de bundle size | 1. Obtener tamaño bundle antes de remover<br>2. Remover firebase-admin<br>3. Ejecutar build<br>4. Medir tamaño nuevo bundle<br>5. Calcular diferencia | Herramienta: webpack-bundle-analyzer | Reducción de ≥1.4MB en bundle.js |
+| TC-001-B01 | Verificar reducción de bundle size | 1. Obtener tamaño bundle antes de remover<br>2. Remover firebase-admin<br>3. Ejecutar build<br>4. Medir tamaño nuevo bundle<br>5. Calcular diferencia | Herramienta: webpack-bundle-analyzer | Reducción de ≥30MB en bundle.js |
 
 ---
 
