@@ -29,6 +29,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - delicious-kitchen-network
     healthcheck:
@@ -133,6 +135,19 @@ services:
       NODE_ENV: ${NODE_ENV}
       PORT: ${NOTIFICATION_SERVICE_PORT}
       RABBITMQ_URL: ${RABBITMQ_URL}
+      # ==========================================
+      # SMTP Configuration for Email Notifications
+      # ==========================================
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
+      # ==========================================
+      # Frontend URL for email links
+      # ==========================================
+      FRONTEND_URL: ${FRONTEND_URL}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -149,6 +164,14 @@ services:
       - "5173:5173"
     environment:
       VITE_API_URL: http://localhost:${API_GATEWAY_PORT}
+      VITE_NOTIFICATION_URL: ${VITE_NOTIFICATION_URL}
+      VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+      VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
+      VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
+      VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
+      VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
+      VITE_FIREBASE_MEASUREMENT_ID: ${VITE_FIREBASE_MEASUREMENT_ID}
     depends_on:
       - api-gateway
     networks:
@@ -167,3 +190,4 @@ networks:
 
 volumes:
   mongodb_data:
+  rabbitmq_data:
