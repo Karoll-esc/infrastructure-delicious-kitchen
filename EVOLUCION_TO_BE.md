@@ -18,7 +18,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 **Problema identificado:**
 - El paquete `firebase-admin` estaba instalado en el **frontend** (cliente)
 - Este paquete contiene **capacidades administrativas** que deben ejecutarse ÚNICAMENTE en servidor
-- Exponía credenciales sensibles y aumentaba el bundle en ~1.5MB
+- Exponía credenciales sensibles y aumentaba el bundle en ~30.5MB
 - Archivo `setAdminClaim.cjs` ejecutándose desde el frontend con permisos de administrador
 
 **Riesgo:** Exposición de claves privadas de Firebase Admin en el navegador del cliente. Cualquier persona con conocimientos técnicos podría extraer las credenciales y comprometer todo el sistema de autenticación.
@@ -31,7 +31,7 @@ La evolución se organizó mediante **18 Historias de Usuario** que abordan prob
 
 **[HU-001] Eliminar Dependencia firebase-admin del Frontend**
 - Paquete `firebase-admin` removido completamente del `package.json` del frontend
-- Bundle reducido en 1.5MB
+- Bundle reducido en ~27.5MB
 - Validación: Build exitoso sin warnings, aplicación funciona normalmente
 
 **[HU-002] Migrar Script setAdminClaim al Backend**
