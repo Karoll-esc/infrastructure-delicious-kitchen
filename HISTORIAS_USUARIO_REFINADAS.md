@@ -9,7 +9,7 @@
 
 * **Como:** Ingeniero de seguridad del sistema
 * **Quiero:** Remover completamente la dependencia `firebase-admin` del código del frontend
-* **Para:** Eliminar el riesgo crítico de seguridad que representa exponer credenciales administrativas en el cliente y reducir el tamaño del bundle en aproximadamente 1.5MB
+* **Para:** Eliminar el riesgo crítico de seguridad que representa exponer credenciales administrativas en el cliente y reducir el tamaño del bundle en aproximadamente 30MB
 
 ## Criterios de Aceptación (Gherkin)
 
@@ -18,7 +18,7 @@ Scenario: Paquete firebase-admin eliminado del frontend
     Given el frontend tiene instalado el paquete firebase-admin
     When se elimina la dependencia del proyecto frontend
     Then el paquete firebase-admin no debe estar presente en las dependencias del frontend
-    And el tamaño del bundle debe reducirse en aproximadamente 1.5MB
+    And el tamaño del bundle debe reducirse en aproximadamente 30MB
 
 Scenario: No existen referencias a firebase-admin en el código frontend
     Given el paquete firebase-admin ha sido eliminado
