@@ -713,3 +713,220 @@ Scenario: Sistema funciona en múltiples ambientes
     Then debe conectarse a las URLs de producción
     And la aplicación debe funcionar correctamente en ambos ambientes
 ```
+
+---
+
+---
+
+# [HU-019] — Validar y Corregir Datos en Reportes de Analytics
+
+## Descripción
+
+* **Como:** Administrador que toma decisiones de negocio basadas en métricas
+* **Quiero:** Que los reportes de analytics muestren datos precisos y consistentes con la base de datos real
+* **Para:** Tomar decisiones informadas sin discrepancias entre reportes y datos reales, especialmente considerando pedidos cancelados y filtros de fecha
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Auditoría de queries de analytics identifica inconsistencias
+    Given existen reportes de analytics con posibles discrepancias
+    When se ejecuta auditoría de queries
+    Then debe identificarse si pedidos cancelados están siendo incluidos incorrectamente
+    And debe verificarse si filtros de fecha funcionan correctamente
+    And debe crearse reporte de inconsistencias encontradas
+
+Scenario: Total de órdenes coincide con base de datos
+    Given existe un reporte que muestra "Total de Órdenes: 150"
+    When se consulta directamente MongoDB con el mismo filtro de fecha
+    Then el conteo de la BD debe coincidir exactamente con el reporte
+    And los pedidos cancelados deben ser excluidos del conteo
+    Or claramente marcados como categoría separada
+
+Scenario: Pedidos cancelados claramente separados en reportes
+    Given existen pedidos con estado "cancelled"
+    When visualizo el dashboard de analytics
+    Then debe haber una sección separada para "Pedidos Cancelados"
+    And el "Total de Órdenes Completadas" no debe incluir cancelados
+    And debe mostrarse claramente: "Completados: X | Cancelados: Y"
+
+Scenario: Filtros de fecha funcionan correctamente
+    Given estoy en el dashboard de analytics
+    When selecciono rango: "Del 1 al 15 de diciembre"
+    And hago clic en "Aplicar filtro"
+    Then solo deben mostrarse pedidos con fecha dentro del rango
+    And el conteo debe corresponder exactamente a pedidos en ese período
+    When comparo con query SQL/MongoDB directa
+    Then los resultados deben ser idénticos
+
+Scenario: Exportación CSV refleja datos exactos
+    Given visualizo un reporte con 100 pedidos completados
+    When hago clic en "Exportar a CSV"
+    And abro el archivo descargado
+    Then el CSV debe contener exactamente 100 filas (más encabezados)
+    And cada fila debe corresponder a un pedido en la BD
+    And los valores (fecha, monto, estado) deben coincidir exactamente
+
+Scenario: Validación automática de consistencia de reportes
+    Given se generan reportes periódicamente
+    When se ejecuta el sistema de validación automática
+    Then debe compararse cada métrica con query directa a BD
+    And si hay discrepancia mayor al 1%
+    Then debe enviarse alerta al administrador
+    And debe registrarse en logs para auditoría
+```
+
+---
+
+# [HU-020] — Optimizar Experiencia de Usuario en Dashboard de Analytics
+
+## Descripción
+
+* **Como:** Administrador que analiza métricas de negocio diariamente
+* **Quiero:** Que el dashboard de analytics tenga una interfaz intuitiva, reactiva y con información clara sobre los datos mostrados
+* **Para:** Analizar métricas de forma eficiente sin confusiones, con actualizaciones automáticas y visualizaciones que reflejen exactamente el período consultado
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Filtros se aplican automáticamente sin botón manual
+    Given estoy en el dashboard de analytics
+    When cambio la fecha "Desde" de "1 dic" a "15 nov"
+    Or cambio la fecha "Hasta" de "17 dic" a "20 dic"
+    Or cambio "Agrupar por" de "mes" a "semana"
+    Then el dashboard debe actualizarse automáticamente
+    And no debe existir botón "Ver métricas" o "Consultar"
+    And los datos deben reflejarse en menos de 2 segundos
+
+Scenario: Rango de fechas permite consultas históricas de 10 años
+    Given estoy seleccionando fechas en los filtros
+    When intento seleccionar fecha "Desde" del año 2020
+    Then el sistema debe permitir la selección
+    And debe poder consultar datos desde hace 10 años
+    When intento seleccionar fecha futura
+    Then el sistema debe bloquear la selección
+    And la fecha máxima debe ser hoy
+
+Scenario: Gráficos muestran rango de fechas real seleccionado
+    Given he seleccionado rango "15 nov - 20 dic"
+    When visualizo los gráficos de líneas y barras
+    Then el subtítulo debe mostrar "15 nov - 20 dic"
+    And NO debe mostrar texto genérico como "Últimos 30 días"
+    When selecciono un solo día "17 dic"
+    Then el subtítulo debe mostrar "17 dic"
+
+Scenario: Subtítulos de gráficos respetan idioma seleccionado
+    Given tengo el sistema en español
+    And he seleccionado rango "1 dic - 15 dic"
+    When visualizo los gráficos
+    Then el subtítulo debe mostrar "1 dic - 15 dic"
+    When cambio el idioma a inglés
+    Then el subtítulo debe actualizarse a "Dec 1 - Dec 15"
+
+Scenario: Tabla muestra resumen por período sin repeticiones
+    Given estoy consultando datos agrupados por "semana"
+    When visualizo la tabla de datos
+    Then debe mostrar columnas: Período, Órdenes Completadas, Órdenes Canceladas, Ingresos Totales, Ingresos Perdidos
+    And cada período debe aparecer una sola vez
+    And NO debe mostrar productos individuales en la tabla
+    And los productos deben visualizarse solo en el gráfico de barras
+
+Scenario: Tabla incluye métricas de órdenes canceladas
+    Given existen pedidos cancelados en el período consultado
+    When visualizo la tabla de datos
+    Then debe existir columna "Órdenes Canceladas" con conteo
+    And debe existir columna "Ingresos Perdidos" con monto
+    And los valores de cancelados deben destacarse visualmente (color ámbar/rojo)
+    And los períodos sin cancelaciones deben mostrar 0
+
+Scenario: Exportación CSV refleja estructura de tabla actual
+    Given estoy visualizando la tabla con 5 períodos
+    When hago clic en "Exportar CSV"
+    And abro el archivo descargado
+    Then el CSV debe contener exactamente 5 filas de datos (+ encabezado)
+    And las columnas deben ser: period, totalOrders, totalCancelled, totalRevenue, lostRevenue
+    And NO debe incluir columnas de productos (productId, productName, quantity)
+    And los valores deben coincidir exactamente con la tabla visible
+
+Scenario: Gráfico de líneas muestra correctamente valores bajos
+    Given existen períodos con pocas órdenes (ej: 2, 3, 5 órdenes)
+    When visualizo el gráfico de líneas "Órdenes por período"
+    Then la línea verde debe ser visible y separada del eje X
+    And NO debe aparecer pegada al borde inferior
+    And debe aplicarse margen del 10% en la escala vertical
+    And los valores deben ser legibles en todos los puntos
+```
+
+---
+
+# [HU-021] — Implementar Notificaciones por Email para Clientes Offline
+
+## Descripción
+
+* **Como:** Cliente de Delicious Kitchen que realizó un pedido
+* **Quiero:** Recibir notificaciones por correo electrónico cuando mi pedido cambie de estado (en preparación y listo para recoger)
+* **Para:** Estar informado del progreso de mi pedido incluso si cierro el navegador o pierdo la conexión, sin tener que revisar manualmente el estado constantemente
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Email enviado cuando pedido entra en preparación
+    Given existe un pedido en estado "received" 
+    And el pedido tiene email del cliente registrado
+    When el personal de cocina inicia la preparación del pedido
+    And el estado cambia a "preparing"
+    Then el sistema debe publicar evento "order.preparing" en RabbitMQ
+    And el Notification Service debe consumir el evento
+    And debe enviar un email al cliente con:
+      - Asunto: "Tu pedido está en preparación"
+      - Mensaje: "Hola, sabemos que tienes hambre, queremos notificarte que tu pedido ya está en preparación"
+      - Lista de items del pedido (nombre y cantidad)
+      - URL de seguimiento del pedido
+    And el email debe usar la plantilla HTML con branding del restaurante
+
+Scenario: Email enviado cuando pedido está listo para recoger
+    Given existe un pedido en estado "preparing"
+    And el pedido tiene email del cliente registrado
+    When el personal de cocina marca el pedido como listo
+    And el estado cambia a "ready"
+    Then el sistema debe publicar evento "order.ready" en RabbitMQ
+    And el Notification Service debe consumir el evento
+    And debe enviar un email al cliente con:
+      - Asunto: "¡Tu pedido está listo!"
+      - Mensaje: "¡Genial! Tu pedido ya está listo para recoger"
+      - Lista completa de items del pedido
+      - URL de seguimiento del pedido
+      - Enlace para dejar una reseña
+    And el email debe usar la plantilla HTML con colores corporativos (#ff7e33)
+
+Scenario: Email no enviado si faltan datos requeridos
+    Given existe un pedido que cambia a estado "preparing" o "ready"
+    When el evento llega al Notification Service
+    And faltan datos críticos (customerEmail, orderNumber o items)
+    Then el sistema NO debe enviar email
+    And debe registrar en logs: "⚠️ Orden XXX en [estado] pero faltan datos para email"
+    And debe continuar procesando normalmente sin errores fatales
+
+Scenario: Emails contienen información personalizada del pedido
+    Given un pedido tiene items: [Pizza Margarita x2, Hamburguesa Clásica x1]
+    When se envía email de notificación
+    Then el email debe mostrar:
+      - "Pizza Margarita x 2"
+      - "Hamburguesa Clásica x 1"
+    And debe incluir URL: {FRONTEND_URL}/orders/{orderNumber}
+    And la URL debe ser configurable mediante variable de entorno
+
+Scenario: Plantilla HTML responsive para diferentes dispositivos
+    Given se envía un email de notificación
+    When el cliente lo abre en dispositivo móvil o desktop
+    Then la plantilla debe adaptarse correctamente
+    And debe incluir versión plain text como fallback
+    And debe usar gradiente de marca: linear-gradient(135deg, #ff7e33 0%, #ff5722 100%)
+
+Scenario: Fallback de configuración de URL frontend
+    Given la variable de entorno FRONTEND_URL no está configurada
+    When el sistema genera URLs en emails
+    Then debe usar valor por defecto: "http://localhost:5173"
+    And debe seguir funcionando sin errores
+    And debe registrarse en logs que está usando configuración por defecto
+```

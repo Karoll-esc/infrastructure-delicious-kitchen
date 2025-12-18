@@ -428,3 +428,93 @@
 |----|-------------|-------|------------------|-------------------|
 | TC-018-B01 | Verificar funcionamiento en diferentes entornos | 1. Configurar .env.development<br>2. Ejecutar en dev<br>3. Configurar .env.production<br>4. Compilar para prod | Dev: http://localhost:3000<br>Prod: https://api.production.com | - App conecta a URLs de desarrollo en dev<br>- Bundle incluye URLs de producción en prod<br>- Funciona correctamente en ambos |
 | TC-018-B02 | Reemplazar URLs hardcodeadas con variables | 1. Actualizar código para usar import.meta.env<br>2. Compilar | N/A | - URLs leídas desde variables de entorno<br>- Sin URLs hardcodeadas en código<br>- Compilación exitosa |
+
+---
+
+---
+
+## HU-019: Validar y Corregir Datos en Reportes de Analytics
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-022-P01 | Auditoría identifica inconsistencias | 1. Ejecutar script de auditoría de analytics<br>2. Comparar reportes con BD | Script: auditAnalyticsQueries.js | - Reporte generado<br>- Inconsistencias identificadas<br>- Pedidos cancelados incorrectamente incluidos detectados<br>- Sugerencias de corrección |
+| TC-022-P02 | Total de órdenes coincide con BD | 1. Ver reporte "Total de Órdenes: 150"<br>2. Ejecutar query MongoDB con mismo filtro<br>3. Comparar resultados | Filtro: Último mes<br>Estados: completed, delivered | - Conteo reporte: 150<br>- Conteo BD: 150<br>- Coinciden exactamente<br>- Pedidos cancelados excluidos |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-022-N01 | Detectar inclusión incorrecta de cancelados | 1. Ver "Total de Órdenes Completadas: 200"<br>2. Query BD incluye status=cancelled<br>3. Comparar | Query incorrecta incluye: cancelled | - Auditoría detecta discrepancia<br>- Identifica que cancelados están siendo contados<br>- Alerta generada |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-022-B01 | Validación automática de consistencia | 1. Sistema genera reportes automáticos<br>2. Validación ejecuta cada métrica<br>3. Detecta discrepancia >1% | Reporte: 100 órdenes<br>BD real: 95 órdenes<br>Discrepancia: 5% | - Alerta enviada a administrador<br>- Registrado en logs<br>- Email notificación con detalles |
+| TC-022-B02 | Exportación CSV datos exactos | 1. Ver reporte con 100 pedidos<br>2. Exportar a CSV<br>3. Contar filas en CSV<br>4. Validar cada fila con BD | Reporte: 100 pedidos completados | - CSV contiene 100 filas + encabezados<br>- Cada fila corresponde a pedido en BD<br>- Valores (fecha, monto, estado) coinciden exactamente |
+
+---
+
+## HU-020: Optimizar Experiencia de Usuario en Dashboard de Analytics
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-023-P01 | Filtros se aplican automáticamente sin botón | 1. Acceder a dashboard analytics<br>2. Cambiar "Desde" de "1 dic" a "15 nov"<br>3. Observar actualización | Fecha desde: 15 nov<br>Fecha hasta: 17 dic | - Dashboard actualiza automáticamente<br>- Sin botón "Ver métricas"<br>- Datos actualizados en <2 segundos<br>- useEffect detecta cambio en filtros |
+| TC-023-P02 | Rango de fechas permite 10 años históricos | 1. Hacer clic en input "Desde"<br>2. Intentar seleccionar enero 2015<br>3. Verificar habilitación | Fecha: 01/01/2015 | - Fecha 2015 seleccionable<br>- Input tiene min={hoy - 10 años}<br>- Sistema permite consulta histórica |
+| TC-023-P03 | Gráficos muestran rango real de fechas | 1. Seleccionar rango "15 nov - 20 dic"<br>2. Verificar subtítulos de LineChart y BarChart | from: 15 nov<br>to: 20 dic | - Subtítulo muestra: "15 nov - 20 dic"<br>- NO muestra "Últimos 30 días"<br>- Función getDateRangeLabel() retorna rango exacto |
+| TC-023-P04 | Tabla muestra solo períodos sin productos | 1. Agrupar por "semana"<br>2. Verificar estructura de tabla | groupBy: week<br>3 semanas con datos | - Columnas: Período, Órdenes Completadas, Órdenes Canceladas, Ingresos Totales, Ingresos Perdidos<br>- 3 filas (una por semana)<br>- Sin columnas productId, productName, quantity<br>- Sin repeticiones |
+| TC-023-P05 | CSV exporta estructura de tabla actual | 1. Visualizar tabla con 5 períodos<br>2. Clic "Exportar CSV"<br>3. Abrir archivo | 5 períodos visibles | - CSV tiene 5 filas + encabezado<br>- Columnas: period;totalOrders;totalCancelled;totalRevenue;lostRevenue<br>- Sin columnas de productos<br>- Valores coinciden con tabla |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-023-N01 | Bloquear fechas futuras | 1. Clic en input "Desde"<br>2. Intentar seleccionar fecha futura | Fecha: 25/12/2025 (futura) | - Fecha futura deshabilitada<br>- Input tiene max={hoy}<br>- Calendario no permite selección futura |
+| TC-023-N02 | Rechazar rango mayor a 10 años | 1. Seleccionar "Desde" 01/01/2010<br>2. Seleccionar "Hasta" 17/12/2025<br>3. Intentar consultar | Rango: 15 años | - Backend rechaza query<br>- HTTP 400<br>- Error: "El rango de fechas excede el máximo permitido (10 años)" |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-023-B01 | Subtítulo respeta idioma seleccionado | 1. Sistema en español<br>2. Seleccionar rango "1 dic - 15 dic"<br>3. Verificar subtítulo<br>4. Cambiar a inglés<br>5. Verificar actualización | Rango: 1 dic - 15 dic<br>Idiomas: es, en | - Español: "1 dic - 15 dic"<br>- Inglés: "Dec 1 - Dec 15"<br>- Función usa i18n.language para locale |
+| TC-023-B02 | Mismo día muestra formato corto | 1. Seleccionar "Desde" y "Hasta" con misma fecha<br>2. Verificar subtítulo | from: 17/12/2025<br>to: 17/12/2025 | - Subtítulo muestra: "17 dic"<br>- No muestra "17 dic - 17 dic"<br>- Lógica: if (from === to) |
+| TC-023-B03 | Gráfico de líneas con valores bajos visible | 1. Crear órdenes: 2, 3, 2, 5 por período<br>2. Visualizar LineChart<br>3. Verificar línea verde | Valores: [2, 3, 2, 5] | - Línea verde visible y separada del eje X<br>- No pegada al borde inferior<br>- Margen 10% aplicado en normalización<br>- Padding 20px en cálculo de puntos SVG |
+| TC-023-B04 | Métricas canceladas destacadas visualmente | 1. Período con 3 cancelaciones y $72.000 perdidos<br>2. Verificar tabla | totalCancelled: 3<br>lostRevenue: 72000 | - Valor "3" en color ámbar (text-amber-600)<br>- Valor "$72.000" en color rojo (text-red-600)<br>- Font-weight: medium aplicado<br>- Períodos con 0 en color normal |
+| TC-023-B05 | Tabla sin productos individuales | 1. Verificar getTableData()<br>2. Confirmar estructura retornada | N/A | - Retorna array de períodos<br>- NO hace producto cartesiano con productsSold<br>- Cada período aparece 1 sola vez<br>- Productos solo en BarChart |
+
+---
+
+## HU-021: Implementar Notificaciones por Email para Clientes Offline
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-024-P01 | Email enviado cuando pedido entra en preparación | 1. Crear pedido con email: cliente@test.com, items: [Pizza x2]<br>2. Kitchen Service cambia estado a preparing<br>3. Verificar RabbitMQ recibe evento<br>4. Verificar email enviado | orderNumber: ORD-12345<br>customerEmail: cliente@test.com<br>customerName: Juan Pérez<br>items: [{name: "Pizza", quantity: 2}]<br>status: preparing | - Evento "order.preparing" publicado en RabbitMQ<br>- Email recibido con asunto: "Tu pedido está en preparación"<br>- Cuerpo contiene: "tu pedido ya está en preparación"<br>- Lista de items: "Pizza x 2"<br>- URL: {FRONTEND_URL}/orders/ORD-12345<br>- Plantilla HTML con branding naranja (#ff7e33) |
+| TC-024-P02 | Email enviado cuando pedido está listo | 1. Crear pedido en estado preparing<br>2. Kitchen Service cambia a ready<br>3. Verificar email recibido | orderNumber: ORD-67890<br>customerEmail: maria@test.com<br>items: [{name: "Hamburguesa", quantity: 1}, {name: "Papas", quantity: 1}] | - Evento "order.ready" publicado<br>- Email con asunto: "¡Tu pedido está listo!"<br>- Mensaje: "Tu pedido ya está listo para recoger"<br>- Lista completa de items<br>- Botón "Deja tu reseña" con enlace<br>- URL de seguimiento incluida |
+| TC-024-P03 | Versión plain text como fallback | 1. Enviar email de notificación<br>2. Inspeccionar MIME parts<br>3. Verificar existencia de text/plain | N/A | - Email multipart/alternative<br>- text/html con plantilla completa<br>- text/plain con contenido equivalente sin HTML<br>- Ambas versiones legibles |
+| TC-024-P04 | URL configurable mediante variable de entorno | 1. Configurar FRONTEND_URL=https://delicious.com<br>2. Reiniciar notification-service<br>3. Enviar pedido a preparing<br>4. Verificar email | FRONTEND_URL=https://delicious.com<br>orderNumber: ORD-111 | - URL en email: https://delicious.com/orders/ORD-111<br>- NO usa localhost<br>- process.env.FRONTEND_URL leída correctamente |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-024-N01 | Email no enviado si falta customerEmail | 1. Crear pedido sin email<br>2. Cambiar a preparing<br>3. Verificar logs | orderNumber: ORD-999<br>customerEmail: null<br>items: [Pizza x1] | - Email NO enviado<br>- Log: "⚠️ Orden ORD-999 en preparación pero faltan datos para email"<br>- Log: "customerEmail: false"<br>- Sistema continúa sin error fatal |
+| TC-024-N02 | Email no enviado si falta items | 1. Crear pedido con email válido<br>2. Evento sin array items<br>3. Verificar comportamiento | orderNumber: ORD-888<br>customerEmail: test@mail.com<br>items: undefined | - Email NO enviado<br>- Log: "items: false"<br>- Consumidor detecta datos faltantes<br>- Sin crash del servicio |
+| TC-024-N03 | Evento no publicado si pedido no cambia de estado | 1. Crear pedido en preparing<br>2. Intentar cambiar a preparing nuevamente<br>3. Verificar RabbitMQ | Estado actual: preparing<br>Estado solicitado: preparing | - Sin evento publicado<br>- Operación de cambio de estado rechazada<br>- Sin emails duplicados |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-024-B01 | Fallback a localhost si FRONTEND_URL no configurada | 1. Eliminar variable FRONTEND_URL del .env<br>2. Reiniciar notification-service<br>3. Enviar email | FRONTEND_URL: undefined<br>orderNumber: ORD-222 | - URL en email: http://localhost:5173/orders/ORD-222<br>- Valor por defecto aplicado<br>- Sistema funciona sin errores |
+| TC-024-B02 | Plantilla responsive en móvil y desktop | 1. Enviar email de prueba<br>2. Abrir en Gmail mobile<br>3. Abrir en Outlook desktop<br>4. Verificar renderizado | N/A | - Móvil: Diseño adaptado, textos legibles, botones táctiles<br>- Desktop: Layout centrado, imágenes cargadas<br>- Sin elementos desbordados<br>- Meta viewport correcto |
+| TC-024-B03 | Items extraídos correctamente de estructura anidada | 1. Kitchen Service envía evento con estructura: {data: {items: [...]}}<br>2. Consumer extrae items<br>3. Verificar email | Estructura evento:<br>{orderNumber: "X", data: {items: [Pizza x1]}} | - Items extraídos correctamente<br>- Código: `event.data.data?.items \|\| event.data.items`<br>- Email muestra lista de items<br>- Soporta ambas estructuras (anidada y plana) |
+| TC-024-B04 | Manejo de caracteres especiales en nombres | 1. Crear pedido con item: "Café Frappé"<br>2. Enviar email<br>3. Verificar encoding | items: [{name: "Café Frappé", quantity: 1}] | - Caracteres especiales (é) renderizados correctamente<br>- Encoding UTF-8 en email<br>- Sin caracteres corruptos o "?" |
+| TC-024-B05 | Email enviado incluso si falla conexión RabbitMQ momentánea | 1. Simular desconexión RabbitMQ<br>2. Kitchen Service cambia estado a ready<br>3. RabbitMQ se recupera<br>4. Verificar comportamiento | Estado: ready<br>RabbitMQ down → up | - Evento encolado para retry<br>- Email enviado cuando RabbitMQ se recupera<br>- Sistema resiliente ante fallos temporales<br>- No se pierden notificaciones |
+| TC-024-B06 | Colores corporativos aplicados correctamente | 1. Enviar email de preparing o ready<br>2. Inspeccionar HTML del email<br>3. Verificar estilos | N/A | - Gradiente naranja: linear-gradient(135deg, #ff7e33 0%, #ff5722 100%)<br>- Botones con color #ff7e33<br>- NO usa colores morados antiguos (#667eea)<br>- Branding consistente con frontend |
+
