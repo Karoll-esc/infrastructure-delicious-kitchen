@@ -25,14 +25,6 @@ foreach ($repo in $repos) {
         Write-Host "📥 Clonando $repo..." -ForegroundColor Cyan
         git clone "https://github.com/Karoll-esc/$repo.git"
     }
-    
-    # Instalar dependencias
-    if (Test-Path "$repo\package.json") {
-        Write-Host "📦 Instalando dependencias en $repo..." -ForegroundColor Cyan
-        Set-Location $repo
-        npm install
-        Set-Location ..
-    }
 }
 
 Write-Host "✅ Todos los repositorios clonados y dependencias instaladas!" -ForegroundColor Green
