@@ -48,28 +48,6 @@ La carpeta [`scripts/`](scripts/) contiene scripts automatizados para facilitar 
 cd infrastructure-delicious-kitchen/scripts
 .\setup-repos.ps1
 ```
-
-### `start-all.ps1` / `start-all.sh`
-**Propósito:** Inicia todos los servicios usando Docker Compose.
-
-**Uso (Windows):**
-```powershell
-.\scripts\start-all.ps1
-```
-
-**Uso (Linux/Mac):**
-```bash
-./scripts/start-all.sh
-```
-
-### `stop-all.ps1`
-**Propósito:** Detiene y elimina todos los contenedores Docker del proyecto.
-
-**Uso:**
-```powershell
-.\scripts\stop-all.ps1
-```
-
 ---
 
 ## 📚 Documentación de Negocio
@@ -192,16 +170,6 @@ Configuración de **producción** para orquestar todos los microservicios con Do
 - Notification Service
 - Frontend
 - MongoDB
-- Redis
-
----
-
-### `docker-compose.dev.yml`
-Configuración de **desarrollo** con:
-- Montaje de volúmenes para hot-reload
-- Puertos expuestos para debugging
-- Variables de entorno de desarrollo
-- Configuraciones optimizadas para debugging
 
 ---
 
@@ -245,12 +213,6 @@ cp .env.example .env
 
 ### 3️⃣ Levantar todos los servicios
 
-**Desarrollo:**
-```bash
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-**Producción:**
 ```bash
 docker-compose up -d
 ```
