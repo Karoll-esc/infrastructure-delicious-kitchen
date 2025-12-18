@@ -520,17 +520,35 @@ A continuación se listan los **problemas identificados en AS IS que NO fueron a
 
 ---
 
-### 🟢 Manejo de Notificaciones Offline
+### ✅ Manejo de Notificaciones Offline
 
-**Estado:** No implementado.
+**Estado:** ✅ **IMPLEMENTADO** (HU-024)
 
-**Limitación:** Si el cliente cierra el navegador, no recibe notificación de "pedido listo".
+**Solución implementada:**
+- Sistema de notificaciones por email usando Nodemailer con Gmail SMTP
+- Email enviado cuando pedido cambia a estado `preparing` con mensaje: "Hola, sabemos que tienes hambre, queremos notificarte que tu pedido ya está en preparación"
+- Email enviado cuando pedido cambia a estado `ready` con mensaje: "¡Tu pedido está listo para recoger!" + enlace para dejar reseña
+- Plantillas HTML responsive con branding corporativo (gradiente naranja #ff7e33)
+- Lista completa de items en cada email
+- URLs configurables mediante variable de entorno `FRONTEND_URL`
+- Versión plain text como fallback para clientes sin soporte HTML
+- Consumo de eventos RabbitMQ (`order.preparing` y `order.ready`)
+- Validación robusta de datos requeridos antes de enviar
 
-**Impacto:** Cliente debe revisar manualmente el estado del pedido.
+**Casos de prueba validados:**
+- `TC-024-P01`: Email enviado en estado preparing
+- `TC-024-P02`: Email enviado en estado ready con botón de reseña
+- `TC-024-P03`: Versión plain text incluida
+- `TC-024-P04`: URLs configurables con variable de entorno
+- `TC-024-N01`: Email no enviado si falta customerEmail
+- `TC-024-N02`: Email no enviado si faltan items
+- `TC-024-B01`: Fallback a localhost si FRONTEND_URL no configurada
+- `TC-024-B03`: Extracción correcta de items de estructura anidada
+- `TC-024-B06`: Colores corporativos aplicados correctamente
 
-**Recomendación:** Implementar fallback con:
-- Email notification cuando pedido esté listo
-- O SMS notification (integración con Twilio/AWS SNS)
+**Impacto:** Cliente recibe notificaciones incluso si cierra el navegador. No necesita revisar manualmente el estado del pedido.
+
+**Extensión futura recomendada:** SMS notification (integración con Twilio/AWS SNS) para mayor alcance.
 
 ---
 

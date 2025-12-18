@@ -716,187 +716,9 @@ Scenario: Sistema funciona en múltiples ambientes
 
 ---
 
-# [HU-019] — Implementar Recuperación de Contraseña
-
-## Descripción
-
-* **Como:** Usuario del sistema que olvidó su contraseña
-* **Quiero:** Poder recuperar el acceso a mi cuenta mediante un enlace de restablecimiento enviado a mi correo electrónico
-* **Para:** Restablecer mi contraseña de forma segura sin necesidad de contactar al administrador
-
-## Criterios de Aceptación (Gherkin)
-
-```gherkin
-Scenario: Solicitud exitosa de recuperación de contraseña
-    Given estoy en la página de login
-    When hago clic en "¿Olvidaste tu contraseña?"
-    And ingreso mi correo electrónico registrado
-    And hago clic en "Enviar enlace de recuperación"
-    Then debe enviarse un correo con enlace de restablecimiento
-    And debo ver un mensaje: "Se ha enviado un enlace de recuperación a tu correo"
-    And el enlace debe expirar después de 1 hora
-
-Scenario: Restablecimiento exitoso de contraseña
-    Given recibí un correo con enlace de recuperación válido
-    When hago clic en el enlace del correo
-    And ingreso una nueva contraseña válida
-    And confirmo la nueva contraseña
-    And hago clic en "Restablecer contraseña"
-    Then mi contraseña debe actualizarse en Firebase Auth
-    And debo ver mensaje: "Contraseña restablecida exitosamente"
-    And debo ser redirigido a la página de login
-
-Scenario: Intento de recuperación con correo no registrado
-    Given estoy en la página de recuperación de contraseña
-    When ingreso un correo que no está registrado en el sistema
-    And hago clic en "Enviar enlace de recuperación"
-    Then debe mostrarse mensaje: "Si el correo existe, recibirás un enlace de recuperación"
-    And no debe revelarse si el correo existe o no (seguridad)
-
-Scenario: Intento de usar enlace de recuperación expirado
-    Given recibí un correo con enlace de recuperación hace más de 1 hora
-    When hago clic en el enlace expirado
-    Then debo ver mensaje: "Este enlace ha expirado. Solicita uno nuevo"
-    And debo poder solicitar un nuevo enlace de recuperación
-
-Scenario: Validación de contraseña nueva
-    Given estoy en la página de restablecimiento con enlace válido
-    When ingreso una contraseña que no cumple los requisitos
-    Then debo ver mensaje de error indicando los requisitos
-    And el botón de restablecer debe estar deshabilitado
-    When ingreso una contraseña válida
-    Then el mensaje de error debe desaparecer
-    And el botón de restablecer debe habilitarse
-```
-
 ---
 
-# [HU-020] — Crear y Listar Productos del Menú
-
-## Descripción
-
-* **Como:** Administrador del restaurante
-* **Quiero:** Poder crear nuevos productos y visualizar el catálogo completo del menú desde el panel administrativo
-* **Para:** Mantener actualizado el menú sin necesidad de modificar código fuente y permitir flexibilidad en la oferta de productos
-
-## Criterios de Aceptación (Gherkin)
-
-```gherkin
-Scenario: Crear producto nuevo exitosamente
-    Given estoy autenticado como administrador
-    And estoy en la sección "Gestión de Productos"
-    When hago clic en "Agregar Producto"
-    And completo el formulario con información válida:
-        | Campo       | Valor                    |
-        | Nombre      | Hamburguesa Especial     |
-        | Descripción | Con queso cheddar y tocino |
-        | Precio      | 12.99                    |
-        | Categoría   | Hamburguesas             |
-        | Imagen URL  | https://example.com/img.jpg |
-        | Estado      | Activo                   |
-    And hago clic en "Guardar"
-    Then el producto debe guardarse en MongoDB
-    And debo ver mensaje: "Producto creado exitosamente"
-    And el nuevo producto debe aparecer en la lista de productos
-
-Scenario: Listar todos los productos existentes
-    Given estoy autenticado como administrador
-    When navego a "Gestión de Productos"
-    Then debo ver una tabla con todos los productos
-    And cada producto debe mostrar: nombre, precio, categoría, estado
-    And debe haber opción de filtrar por categoría
-    And debe haber opción de buscar por nombre
-
-Scenario: Validación de campos obligatorios al crear
-    Given estoy en el formulario de creación de producto
-    When intento guardar sin completar campos obligatorios
-    Then debo ver mensajes de error en campos vacíos:
-        - "El nombre es obligatorio"
-        - "El precio es obligatorio"
-        - "La categoría es obligatoria"
-    And el producto no debe guardarse
-
-Scenario: Validación de precio válido
-    Given estoy creando un nuevo producto
-    When ingreso un precio negativo o no numérico
-    And intento guardar
-    Then debo ver mensaje: "El precio debe ser un número positivo"
-    And el producto no debe guardarse
-
-Scenario: Productos activos visibles en menú público
-    Given existen productos con estado "Activo"
-    When un cliente accede a la página de pedidos
-    Then solo debe ver productos con estado "Activo"
-    And los productos inactivos no deben mostrarse en el menú público
-```
-
----
-
-# [HU-021] — Actualizar y Desactivar Productos del Menú
-
-## Descripción
-
-* **Como:** Administrador del restaurante
-* **Quiero:** Poder editar información de productos existentes y desactivarlos cuando ya no estén disponibles
-* **Para:** Mantener el menú actualizado con precios, descripciones correctas y ocultar productos temporalmente sin eliminarlos de la base de datos
-
-## Criterios de Aceptación (Gherkin)
-
-```gherkin
-Scenario: Actualizar información de producto exitosamente
-    Given estoy autenticado como administrador
-    And existe un producto "Hamburguesa Clásica" con precio $10.99
-    When selecciono el producto de la lista
-    And hago clic en "Editar"
-    And actualizo el precio a $11.99
-    And modifico la descripción
-    And hago clic en "Guardar cambios"
-    Then los cambios deben guardarse en MongoDB
-    And debo ver mensaje: "Producto actualizado exitosamente"
-    And los cambios deben reflejarse inmediatamente en el menú público
-
-Scenario: Desactivar producto temporalmente
-    Given existe un producto activo "Ensalada César"
-    When selecciono el producto
-    And hago clic en "Desactivar"
-    And confirmo la acción
-    Then el estado del producto debe cambiar a "Inactivo"
-    And debo ver mensaje: "Producto desactivado exitosamente"
-    And el producto debe desaparecer del menú público
-    And el producto debe permanecer en la base de datos
-
-Scenario: Reactivar producto previamente desactivado
-    Given existe un producto con estado "Inactivo"
-    When selecciono el producto de la lista (incluyendo filtro de inactivos)
-    And hago clic en "Activar"
-    Then el estado debe cambiar a "Activo"
-    And el producto debe volver a mostrarse en el menú público
-    And debo ver mensaje: "Producto activado exitosamente"
-
-Scenario: Historial de cambios de precio
-    Given un producto ha tenido múltiples actualizaciones de precio
-    When visualizo los detalles del producto
-    Then debo poder acceder a "Historial de Precios"
-    And debo ver una lista con:
-        - Precio anterior
-        - Precio nuevo
-        - Fecha y hora del cambio
-        - Usuario que realizó el cambio
-    And el historial debe estar ordenado del más reciente al más antiguo
-
-Scenario: Validación al actualizar con datos inválidos
-    Given estoy editando un producto existente
-    When ingreso un precio negativo
-    Or dejo el nombre vacío
-    And intento guardar cambios
-    Then debo ver mensajes de error correspondientes
-    And los cambios no deben guardarse
-    And el producto debe mantener su información anterior
-```
-
----
-
-# [HU-022] — Validar y Corregir Datos en Reportes de Analytics
+# [HU-019] — Validar y Corregir Datos en Reportes de Analytics
 
 ## Descripción
 
@@ -956,7 +778,7 @@ Scenario: Validación automática de consistencia de reportes
 
 ---
 
-# [HU-023] — Optimizar Experiencia de Usuario en Dashboard de Analytics
+# [HU-020] — Optimizar Experiencia de Usuario en Dashboard de Analytics
 
 ## Descripción
 
@@ -1033,4 +855,78 @@ Scenario: Gráfico de líneas muestra correctamente valores bajos
     And NO debe aparecer pegada al borde inferior
     And debe aplicarse margen del 10% en la escala vertical
     And los valores deben ser legibles en todos los puntos
+```
+
+---
+
+# [HU-021] — Implementar Notificaciones por Email para Clientes Offline
+
+## Descripción
+
+* **Como:** Cliente de Delicious Kitchen que realizó un pedido
+* **Quiero:** Recibir notificaciones por correo electrónico cuando mi pedido cambie de estado (en preparación y listo para recoger)
+* **Para:** Estar informado del progreso de mi pedido incluso si cierro el navegador o pierdo la conexión, sin tener que revisar manualmente el estado constantemente
+
+## Criterios de Aceptación (Gherkin)
+
+```gherkin
+Scenario: Email enviado cuando pedido entra en preparación
+    Given existe un pedido en estado "received" 
+    And el pedido tiene email del cliente registrado
+    When el personal de cocina inicia la preparación del pedido
+    And el estado cambia a "preparing"
+    Then el sistema debe publicar evento "order.preparing" en RabbitMQ
+    And el Notification Service debe consumir el evento
+    And debe enviar un email al cliente con:
+      - Asunto: "Tu pedido está en preparación"
+      - Mensaje: "Hola, sabemos que tienes hambre, queremos notificarte que tu pedido ya está en preparación"
+      - Lista de items del pedido (nombre y cantidad)
+      - URL de seguimiento del pedido
+    And el email debe usar la plantilla HTML con branding del restaurante
+
+Scenario: Email enviado cuando pedido está listo para recoger
+    Given existe un pedido en estado "preparing"
+    And el pedido tiene email del cliente registrado
+    When el personal de cocina marca el pedido como listo
+    And el estado cambia a "ready"
+    Then el sistema debe publicar evento "order.ready" en RabbitMQ
+    And el Notification Service debe consumir el evento
+    And debe enviar un email al cliente con:
+      - Asunto: "¡Tu pedido está listo!"
+      - Mensaje: "¡Genial! Tu pedido ya está listo para recoger"
+      - Lista completa de items del pedido
+      - URL de seguimiento del pedido
+      - Enlace para dejar una reseña
+    And el email debe usar la plantilla HTML con colores corporativos (#ff7e33)
+
+Scenario: Email no enviado si faltan datos requeridos
+    Given existe un pedido que cambia a estado "preparing" o "ready"
+    When el evento llega al Notification Service
+    And faltan datos críticos (customerEmail, orderNumber o items)
+    Then el sistema NO debe enviar email
+    And debe registrar en logs: "⚠️ Orden XXX en [estado] pero faltan datos para email"
+    And debe continuar procesando normalmente sin errores fatales
+
+Scenario: Emails contienen información personalizada del pedido
+    Given un pedido tiene items: [Pizza Margarita x2, Hamburguesa Clásica x1]
+    When se envía email de notificación
+    Then el email debe mostrar:
+      - "Pizza Margarita x 2"
+      - "Hamburguesa Clásica x 1"
+    And debe incluir URL: {FRONTEND_URL}/orders/{orderNumber}
+    And la URL debe ser configurable mediante variable de entorno
+
+Scenario: Plantilla HTML responsive para diferentes dispositivos
+    Given se envía un email de notificación
+    When el cliente lo abre en dispositivo móvil o desktop
+    Then la plantilla debe adaptarse correctamente
+    And debe incluir versión plain text como fallback
+    And debe usar gradiente de marca: linear-gradient(135deg, #ff7e33 0%, #ff5722 100%)
+
+Scenario: Fallback de configuración de URL frontend
+    Given la variable de entorno FRONTEND_URL no está configurada
+    When el sistema genera URLs en emails
+    Then debe usar valor por defecto: "http://localhost:5173"
+    And debe seguir funcionando sin errores
+    And debe registrarse en logs que está usando configuración por defecto
 ```

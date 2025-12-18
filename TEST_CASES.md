@@ -431,82 +431,9 @@
 
 ---
 
-## HU-019: Implementar Recuperación de Contraseña
-
-### Casos Positivos
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-019-P01 | Solicitar recuperación con email válido | 1. Navegar a /login<br>2. Clic en "¿Olvidaste tu contraseña?"<br>3. Ingresar email registrado<br>4. Clic en "Enviar enlace de recuperación" | Email: admin@test.com | - Correo enviado con enlace<br>- Mensaje: "Se ha enviado un enlace de recuperación a tu correo"<br>- Enlace válido por 1 hora |
-| TC-019-P02 | Restablecer contraseña con enlace válido | 1. Abrir enlace de recuperación del correo<br>2. Ingresar nueva contraseña válida<br>3. Confirmar contraseña<br>4. Clic en "Restablecer contraseña" | Nueva contraseña: NewPass123!<br>Confirmar: NewPass123! | - Contraseña actualizada en Firebase<br>- Mensaje: "Contraseña restablecida exitosamente"<br>- Redirigido a /login<br>- Puede iniciar sesión con nueva contraseña |
-
-### Casos Negativos
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-019-N01 | Solicitar recuperación con email no registrado | 1. Ingresar email que no existe en sistema<br>2. Clic en enviar | Email: noexiste@test.com | - Mensaje genérico: "Si el correo existe, recibirás un enlace"<br>- No revela si email existe (seguridad)<br>- No se envía correo |
-| TC-019-N02 | Intentar usar enlace expirado | 1. Obtener enlace de recuperación<br>2. Esperar más de 1 hora<br>3. Intentar usar enlace | Enlace expirado (>1h) | - Mensaje: "Este enlace ha expirado. Solicita uno nuevo"<br>- No permite restablecer contraseña<br>- Opción de solicitar nuevo enlace |
-
-### Casos Borde
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-019-B01 | Validación de contraseña débil | 1. Abrir enlace válido<br>2. Ingresar contraseña débil<br>3. Intentar restablecer | Nueva contraseña: 123 | - Mensaje: "La contraseña debe tener mín. 8 caracteres, mayúscula, minúscula y número"<br>- Botón restablecer deshabilitado |
-| TC-019-B02 | Contraseñas no coinciden | 1. Ingresar nueva contraseña<br>2. Confirmar con contraseña diferente | Nueva: Pass123!<br>Confirmar: Pass456! | - Mensaje: "Las contraseñas no coinciden"<br>- No permite restablecer |
-
 ---
 
-## HU-020: Crear y Listar Productos del Menú
-
-### Casos Positivos
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-020-P01 | Crear producto nuevo exitosamente | 1. Login como admin<br>2. Navegar a "Gestión de Productos"<br>3. Clic en "Agregar Producto"<br>4. Completar formulario<br>5. Clic en "Guardar" | Nombre: Hamburguesa Especial<br>Descripción: Con queso cheddar<br>Precio: 12.99<br>Categoría: Hamburguesas<br>Estado: Activo | - Producto guardado en MongoDB<br>- Mensaje: "Producto creado exitosamente"<br>- Producto aparece en lista<br>- Visible en menú público |
-| TC-020-P02 | Listar todos los productos | 1. Login como admin<br>2. Navegar a "Gestión de Productos" | N/A | - Tabla con todos los productos<br>- Columnas: nombre, precio, categoría, estado<br>- Opción de filtrar por categoría<br>- Buscador por nombre |
-
-### Casos Negativos
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-020-N01 | Crear producto sin campos obligatorios | 1. Abrir formulario crear producto<br>2. Dejar campos vacíos<br>3. Intentar guardar | Nombre: (vacío)<br>Precio: (vacío)<br>Categoría: (vacío) | - Mensajes de error:<br>  "El nombre es obligatorio"<br>  "El precio es obligatorio"<br>  "La categoría es obligatoria"<br>- Producto NO guardado |
-| TC-020-N02 | Crear producto con precio inválido | 1. Completar formulario<br>2. Ingresar precio negativo<br>3. Intentar guardar | Precio: -5.99 | - Mensaje: "El precio debe ser un número positivo"<br>- Producto NO guardado |
-
-### Casos Borde
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-020-B01 | Productos activos visibles en menú público | 1. Crear producto con estado Activo<br>2. Crear producto con estado Inactivo<br>3. Acceder al menú como cliente | Producto A: Activo<br>Producto B: Inactivo | - Cliente ve solo Producto A<br>- Producto B NO visible en menú público |
-| TC-020-B02 | Filtrar productos por categoría | 1. Tener productos en múltiples categorías<br>2. Seleccionar filtro "Hamburguesas" | Filtro: Hamburguesas | - Solo productos de categoría Hamburguesas mostrados<br>- Otras categorías ocultas |
-
----
-
-## HU-021: Actualizar y Desactivar Productos del Menú
-
-### Casos Positivos
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-021-P01 | Actualizar producto exitosamente | 1. Seleccionar producto "Hamburguesa Clásica"<br>2. Clic en "Editar"<br>3. Cambiar precio de $10.99 a $11.99<br>4. Modificar descripción<br>5. Guardar cambios | Precio anterior: $10.99<br>Precio nuevo: $11.99<br>Nueva descripción: "Con ingredientes frescos" | - Cambios guardados en MongoDB<br>- Mensaje: "Producto actualizado exitosamente"<br>- Cambios reflejados inmediatamente en menú público |
-| TC-021-P02 | Desactivar producto temporalmente | 1. Seleccionar producto activo "Ensalada César"<br>2. Clic en "Desactivar"<br>3. Confirmar acción | Producto: Ensalada César<br>Estado actual: Activo | - Estado cambia a "Inactivo"<br>- Mensaje: "Producto desactivado exitosamente"<br>- Producto desaparece del menú público<br>- Producto permanece en BD |
-| TC-021-P03 | Reactivar producto inactivo | 1. Filtrar productos inactivos<br>2. Seleccionar producto<br>3. Clic en "Activar" | Estado actual: Inactivo | - Estado cambia a "Activo"<br>- Producto visible en menú público<br>- Mensaje: "Producto activado exitosamente" |
-
-### Casos Negativos
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-021-N01 | Actualizar con precio inválido | 1. Editar producto<br>2. Ingresar precio negativo<br>3. Intentar guardar | Precio: -10.00 | - Mensaje: "El precio debe ser un número positivo"<br>- Cambios NO guardados<br>- Producto mantiene información anterior |
-| TC-021-N02 | Actualizar con nombre vacío | 1. Editar producto<br>2. Borrar nombre<br>3. Intentar guardar | Nombre: (vacío) | - Mensaje: "El nombre es obligatorio"<br>- Cambios NO guardados |
-
-### Casos Borde
-
-| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
-|----|-------------|-------|------------------|-------------------|
-| TC-021-B01 | Historial de cambios de precio | 1. Actualizar precio 3 veces<br>2. Ver detalles del producto<br>3. Acceder a "Historial de Precios" | Precio 1: $10.99 (01/12)<br>Precio 2: $11.99 (10/12)<br>Precio 3: $12.99 (15/12) | - Lista con 3 entradas<br>- Cada entrada: precio anterior, precio nuevo, fecha, usuario<br>- Ordenado del más reciente al más antiguo |
-
----
-
-## HU-022: Validar y Corregir Datos en Reportes de Analytics
+## HU-019: Validar y Corregir Datos en Reportes de Analytics
 
 ### Casos Positivos
 
@@ -530,7 +457,7 @@
 
 ---
 
-## HU-023: Optimizar Experiencia de Usuario en Dashboard de Analytics
+## HU-020: Optimizar Experiencia de Usuario en Dashboard de Analytics
 
 ### Casos Positivos
 
@@ -558,3 +485,36 @@
 | TC-023-B03 | Gráfico de líneas con valores bajos visible | 1. Crear órdenes: 2, 3, 2, 5 por período<br>2. Visualizar LineChart<br>3. Verificar línea verde | Valores: [2, 3, 2, 5] | - Línea verde visible y separada del eje X<br>- No pegada al borde inferior<br>- Margen 10% aplicado en normalización<br>- Padding 20px en cálculo de puntos SVG |
 | TC-023-B04 | Métricas canceladas destacadas visualmente | 1. Período con 3 cancelaciones y $72.000 perdidos<br>2. Verificar tabla | totalCancelled: 3<br>lostRevenue: 72000 | - Valor "3" en color ámbar (text-amber-600)<br>- Valor "$72.000" en color rojo (text-red-600)<br>- Font-weight: medium aplicado<br>- Períodos con 0 en color normal |
 | TC-023-B05 | Tabla sin productos individuales | 1. Verificar getTableData()<br>2. Confirmar estructura retornada | N/A | - Retorna array de períodos<br>- NO hace producto cartesiano con productsSold<br>- Cada período aparece 1 sola vez<br>- Productos solo en BarChart |
+
+---
+
+## HU-021: Implementar Notificaciones por Email para Clientes Offline
+
+### Casos Positivos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-024-P01 | Email enviado cuando pedido entra en preparación | 1. Crear pedido con email: cliente@test.com, items: [Pizza x2]<br>2. Kitchen Service cambia estado a preparing<br>3. Verificar RabbitMQ recibe evento<br>4. Verificar email enviado | orderNumber: ORD-12345<br>customerEmail: cliente@test.com<br>customerName: Juan Pérez<br>items: [{name: "Pizza", quantity: 2}]<br>status: preparing | - Evento "order.preparing" publicado en RabbitMQ<br>- Email recibido con asunto: "Tu pedido está en preparación"<br>- Cuerpo contiene: "tu pedido ya está en preparación"<br>- Lista de items: "Pizza x 2"<br>- URL: {FRONTEND_URL}/orders/ORD-12345<br>- Plantilla HTML con branding naranja (#ff7e33) |
+| TC-024-P02 | Email enviado cuando pedido está listo | 1. Crear pedido en estado preparing<br>2. Kitchen Service cambia a ready<br>3. Verificar email recibido | orderNumber: ORD-67890<br>customerEmail: maria@test.com<br>items: [{name: "Hamburguesa", quantity: 1}, {name: "Papas", quantity: 1}] | - Evento "order.ready" publicado<br>- Email con asunto: "¡Tu pedido está listo!"<br>- Mensaje: "Tu pedido ya está listo para recoger"<br>- Lista completa de items<br>- Botón "Deja tu reseña" con enlace<br>- URL de seguimiento incluida |
+| TC-024-P03 | Versión plain text como fallback | 1. Enviar email de notificación<br>2. Inspeccionar MIME parts<br>3. Verificar existencia de text/plain | N/A | - Email multipart/alternative<br>- text/html con plantilla completa<br>- text/plain con contenido equivalente sin HTML<br>- Ambas versiones legibles |
+| TC-024-P04 | URL configurable mediante variable de entorno | 1. Configurar FRONTEND_URL=https://delicious.com<br>2. Reiniciar notification-service<br>3. Enviar pedido a preparing<br>4. Verificar email | FRONTEND_URL=https://delicious.com<br>orderNumber: ORD-111 | - URL en email: https://delicious.com/orders/ORD-111<br>- NO usa localhost<br>- process.env.FRONTEND_URL leída correctamente |
+
+### Casos Negativos
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-024-N01 | Email no enviado si falta customerEmail | 1. Crear pedido sin email<br>2. Cambiar a preparing<br>3. Verificar logs | orderNumber: ORD-999<br>customerEmail: null<br>items: [Pizza x1] | - Email NO enviado<br>- Log: "⚠️ Orden ORD-999 en preparación pero faltan datos para email"<br>- Log: "customerEmail: false"<br>- Sistema continúa sin error fatal |
+| TC-024-N02 | Email no enviado si falta items | 1. Crear pedido con email válido<br>2. Evento sin array items<br>3. Verificar comportamiento | orderNumber: ORD-888<br>customerEmail: test@mail.com<br>items: undefined | - Email NO enviado<br>- Log: "items: false"<br>- Consumidor detecta datos faltantes<br>- Sin crash del servicio |
+| TC-024-N03 | Evento no publicado si pedido no cambia de estado | 1. Crear pedido en preparing<br>2. Intentar cambiar a preparing nuevamente<br>3. Verificar RabbitMQ | Estado actual: preparing<br>Estado solicitado: preparing | - Sin evento publicado<br>- Operación de cambio de estado rechazada<br>- Sin emails duplicados |
+
+### Casos Borde
+
+| ID | Descripción | Pasos | Datos de Entrada | Resultado Esperado |
+|----|-------------|-------|------------------|-------------------|
+| TC-024-B01 | Fallback a localhost si FRONTEND_URL no configurada | 1. Eliminar variable FRONTEND_URL del .env<br>2. Reiniciar notification-service<br>3. Enviar email | FRONTEND_URL: undefined<br>orderNumber: ORD-222 | - URL en email: http://localhost:5173/orders/ORD-222<br>- Valor por defecto aplicado<br>- Sistema funciona sin errores |
+| TC-024-B02 | Plantilla responsive en móvil y desktop | 1. Enviar email de prueba<br>2. Abrir en Gmail mobile<br>3. Abrir en Outlook desktop<br>4. Verificar renderizado | N/A | - Móvil: Diseño adaptado, textos legibles, botones táctiles<br>- Desktop: Layout centrado, imágenes cargadas<br>- Sin elementos desbordados<br>- Meta viewport correcto |
+| TC-024-B03 | Items extraídos correctamente de estructura anidada | 1. Kitchen Service envía evento con estructura: {data: {items: [...]}}<br>2. Consumer extrae items<br>3. Verificar email | Estructura evento:<br>{orderNumber: "X", data: {items: [Pizza x1]}} | - Items extraídos correctamente<br>- Código: `event.data.data?.items \|\| event.data.items`<br>- Email muestra lista de items<br>- Soporta ambas estructuras (anidada y plana) |
+| TC-024-B04 | Manejo de caracteres especiales en nombres | 1. Crear pedido con item: "Café Frappé"<br>2. Enviar email<br>3. Verificar encoding | items: [{name: "Café Frappé", quantity: 1}] | - Caracteres especiales (é) renderizados correctamente<br>- Encoding UTF-8 en email<br>- Sin caracteres corruptos o "?" |
+| TC-024-B05 | Email enviado incluso si falla conexión RabbitMQ momentánea | 1. Simular desconexión RabbitMQ<br>2. Kitchen Service cambia estado a ready<br>3. RabbitMQ se recupera<br>4. Verificar comportamiento | Estado: ready<br>RabbitMQ down → up | - Evento encolado para retry<br>- Email enviado cuando RabbitMQ se recupera<br>- Sistema resiliente ante fallos temporales<br>- No se pierden notificaciones |
+| TC-024-B06 | Colores corporativos aplicados correctamente | 1. Enviar email de preparing o ready<br>2. Inspeccionar HTML del email<br>3. Verificar estilos | N/A | - Gradiente naranja: linear-gradient(135deg, #ff7e33 0%, #ff5722 100%)<br>- Botones con color #ff7e33<br>- NO usa colores morados antiguos (#667eea)<br>- Branding consistente con frontend |
+
